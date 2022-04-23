@@ -6,20 +6,12 @@ import (
 	"github.com/dexthrottle/trfine/internal/config"
 	"github.com/dexthrottle/trfine/internal/model"
 	log "github.com/dexthrottle/trfine/pkg/logger"
-	"gorm.io/driver/postgres"
+	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 )
 
 func NewPostgresDB(cfg *config.Config) (*gorm.DB, error) {
-	dsn := fmt.Sprintf(
-		"postgres://%s:%s@%s:%s/%s",
-		cfg.Database.User,
-		cfg.Database.Password,
-		cfg.Database.Host,
-		cfg.Database.Port,
-		cfg.Database.DBName,
-	)
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(fmt.Sprintf("%s.db", cfg.Database.DBName)), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Error connection database: %v", err)
 		return nil, err
