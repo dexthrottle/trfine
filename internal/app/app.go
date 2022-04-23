@@ -19,7 +19,7 @@ import (
 )
 
 func Run() {
-	logging.Init()
+	logging.Init(false)
 	log := logging.GetLogger()
 	cfg := config.GetConfig()
 	log.Info("config init")
@@ -37,7 +37,7 @@ func Run() {
 	services := service.NewService(ctx, *repos, log)
 	log.Info("Connect services successfully!")
 	handlers := handler.NewHandler(services, log)
-	log.Info("Connect services successfully!")
+	log.Info("Connect handlers successfully!")
 
 	srv := server.NewServer(cfg.App.Port, handlers.InitRoutes())
 	if cfg.App.GinMode == "release" {

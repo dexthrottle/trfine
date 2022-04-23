@@ -40,8 +40,11 @@ from twisted.internet import reactor
 from twisted.protocols.basic import LineReceiver
 from twisted.internet.protocol import Factory
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
+
+
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 init()
+
 
 class Initialization():
     """Инициализация начальных переменных"""
@@ -110,6 +113,7 @@ class Initialization():
         except Exception as e:
             logging.error('init.github():\nresponse: {}\nexcept: {}\n'.format(response, str(e)))
 
+
 class MathFunc():
     """Операции с числами"""
 
@@ -146,6 +150,7 @@ class MathFunc():
         else:
             pass
         return self.str_number
+
 
 class DataBase(): 
     """Действия с БД"""
@@ -497,6 +502,7 @@ class DataBase():
             return request_list
         except:
             return ''
+
 
 class Main(): # Главное меню
 
@@ -1391,6 +1397,7 @@ class Main(): # Главное меню
         else:
             main.print_menu()
 
+
 class Bot(): # Запуск бота
 
     def __init__(self):
@@ -1869,6 +1876,7 @@ class Bot(): # Запуск бота
                 break
             time.sleep(1)
 
+
 class Telegram(): # Telegram
 
     def __init__(self):
@@ -2023,6 +2031,7 @@ class Telegram(): # Telegram
                     telegram.stop_bot()
             else:
                 self.try_send = 0
+
 
 class Stream():
     """Класс стримов  веб-сокеты"""
@@ -2345,6 +2354,7 @@ class Stream():
                 elif X == 'FILLED': # Новый ордер
                     order.filled(s, S, p, q, L, l, z, Z, Y, i, o)
 
+
 class Orders():
     """Работа с ордерами"""
 
@@ -2592,6 +2602,7 @@ class Orders():
                     db.write('updates', 'symbols', 'pair', s,
                         lockQuantity = 0,
                         statusOrder = 'USER_AVERAGING_ORDER')
+
 
 if __name__ == '__main__':
     """Главный блок"""
