@@ -21,6 +21,7 @@ import (
 func Run() {
 	logging.Init(false)
 	log := logging.GetLogger()
+
 	cfg := config.GetConfig()
 	log.Info("config init")
 
