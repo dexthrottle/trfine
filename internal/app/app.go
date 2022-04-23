@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -21,13 +22,18 @@ import (
 )
 
 func Run() {
+
+	// TODO: проверить наличие файла с базой, если есть
+	// то сделать запрос на AppConfig и получить конфиг для приложения
+
 	reader := bufio.NewReader(os.Stdin)
-	useLogs := false
+	var useLogs bool
 	fmt.Print("Включить логгирование? (Y/n): ")
 	useLogsText, _ := reader.ReadString('\n')
-	if useLogsText == "Y" || useLogsText == "y" {
+	if strings.TrimSuffix(useLogsText, "\n") == "Y" || strings.TrimSuffix(useLogsText, "\n") == "y" {
 		useLogs = true
-
+	} else {
+		useLogs = false
 	}
 	fmt.Print("Введите порт для запуска приложения: ")
 	portApp, _ := reader.ReadString('\n')
@@ -35,7 +41,7 @@ func Run() {
 	logging.Init(useLogs)
 	log := logging.GetLogger()
 
-	cfg := config.GetConfig(useLogs, portApp)
+	cfg := config.GetConfig(useLogs, strings.TrimSuffix(portApp, "\n"))
 	log.Info("config init")
 
 	db, err := repository.NewPostgresDB(cfg, &log)
@@ -44,13 +50,7 @@ func Run() {
 	}
 	log.Info("Connect to database successfully!")
 
-	for {
-		stateAppConfig := firstStart()
-		if stateAppConfig {
-			break
-		}
-		panic("Случилось зло. Убиваемся!")
-	}
+	firstStart()
 
 	ctx := context.Background()
 
