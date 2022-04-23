@@ -21,20 +21,6 @@ func NewHandler(service *service.Service, log logging.Logger) *Handler {
 func (h *Handler) InitRoutes() *gin.Engine {
 	r := gin.New()
 
-	blogRoutes := r.Group("api/posts")
-	{
-		blogRoutes.GET("/", h.AllPost)
-		blogRoutes.POST("/", h.InsertPost)
-		blogRoutes.DELETE("/:id", h.DeletePost)
-	}
-
-	categoryRoutes := r.Group("api/categories")
-	{
-		categoryRoutes.GET("/", h.AllCategory)
-		categoryRoutes.POST("/", h.InsertCategory)
-		categoryRoutes.DELETE("/:id", h.DeleteCategory)
-	}
-
 	userRoutes := r.Group("api/user")
 	{
 		userRoutes.GET("/profile", h.ProfileUser)

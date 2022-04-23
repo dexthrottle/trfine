@@ -1,11 +1,14 @@
 package app
 
 import (
+	"bufio"
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -19,12 +22,26 @@ import (
 )
 
 func Run() {
-	// TODO: сделать сканы от пользователя если файлы .env нет
 
-	logging.Init(true)
+	// TODO: проверить наличие файла с базой, если есть
+	// то сделать запрос на AppConfig и получить конфиг для приложения
+
+	reader := bufio.NewReader(os.Stdin)
+	var useLogs bool
+	fmt.Print("Включить логгирование? (Y/n): ")
+	useLogsText, _ := reader.ReadString('\n')
+	if strings.TrimSuffix(useLogsText, "\n") == "Y" || strings.TrimSuffix(useLogsText, "\n") == "y" {
+		useLogs = true
+	} else {
+		useLogs = false
+	}
+	fmt.Print("Введите порт для запуска приложения: ")
+	portApp, _ := reader.ReadString('\n')
+
+	logging.Init(useLogs)
 	log := logging.GetLogger()
 
-	cfg := config.GetConfig()
+	cfg := config.GetConfig(useLogs, strings.TrimSuffix(portApp, "\n"))
 	log.Info("config init")
 
 	db, err := repository.NewPostgresDB(cfg, &log)
@@ -32,6 +49,8 @@ func Run() {
 		panic("database connect error" + err.Error())
 	}
 	log.Info("Connect to database successfully!")
+
+	firstStart()
 
 	ctx := context.Background()
 
