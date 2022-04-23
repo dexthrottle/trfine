@@ -44,6 +44,7 @@ func Run() {
 	if cfg.App.GinMode == "release" {
 		gin.SetMode(gin.ReleaseMode)
 	}
+
 	srv := server.NewServer(cfg.App.Port, handlers.InitRoutes())
 
 	go func() {
