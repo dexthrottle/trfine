@@ -5,19 +5,19 @@ import (
 
 	"github.com/dexthrottle/trfine/internal/config"
 	"github.com/dexthrottle/trfine/internal/model"
-	log "github.com/dexthrottle/trfine/pkg/logger"
+	"github.com/dexthrottle/trfine/pkg/logging"
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 )
 
-func NewPostgresDB(cfg *config.Config) (*gorm.DB, error) {
+func NewPostgresDB(cfg *config.Config, log *logging.Logger) (*gorm.DB, error) {
 	db, err := gorm.Open(sqlite.Open(fmt.Sprintf("%s.db", cfg.Database.DBName)), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Error connection database: %v", err)
 		return nil, err
 	}
 
-	err = migrations(db)
+	err = migrations(db, log)
 	if err != nil {
 		return nil, err
 	}
@@ -26,8 +26,8 @@ func NewPostgresDB(cfg *config.Config) (*gorm.DB, error) {
 	return db, nil
 }
 
-func migrations(db *gorm.DB) error {
-	err := db.AutoMigrate(&model.User{}, &model.Item{})
+func migrations(db *gorm.DB, log *logging.Logger) error {
+	err := db.AutoMigrate(&model.User{}, &model.Category{}, &model.Post{})
 	if err != nil {
 		log.Errorf("Migrate error: %v", err)
 		return err

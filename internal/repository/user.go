@@ -2,96 +2,70 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	"github.com/dexthrottle/trfine/internal/model"
-	log "github.com/dexthrottle/trfine/pkg/logger"
-	"golang.org/x/crypto/bcrypt"
+	"github.com/dexthrottle/trfine/pkg/logging"
 	"gorm.io/gorm"
 )
 
 //UserRepository is contract what userRepository can do to db
 type UserRepository interface {
 	InsertUser(ctx context.Context, user model.User) (*model.User, error)
-	UpdateUser(ctx context.Context, user model.User) (*model.User, error)
-	VerifyCredential(ctx context.Context, email string) (*model.User, error)
-	IsDuplicateEmail(ctx context.Context, email string) (bool, error)
-	FindByEmail(ctx context.Context, email string) (*model.User, error)
 	ProfileUser(ctx context.Context, userID string) (*model.User, error)
+	IsDuplicateUserTGID(ctx context.Context, tgID int) (bool, error)
+	FindUserByTgUserId(ctx context.Context, userTgId int) (*model.User, error)
 }
 
 type userConnection struct {
 	ctx        context.Context
 	connection *gorm.DB
+	log        logging.Logger
 }
 
 //NewUserRepository is creates a new instance of UserRepository
-func NewUserRepository(ctx context.Context, db *gorm.DB) UserRepository {
+func NewUserRepository(ctx context.Context, db *gorm.DB, log logging.Logger) UserRepository {
 	return &userConnection{
 		ctx:        ctx,
 		connection: db,
+		log:        log,
 	}
 }
 
-// Добавление пользователя
-func (db *userConnection) InsertUser(ctx context.Context, user model.User) (*model.User, error) {
-	tx := db.connection.WithContext(ctx)
-	user.Password = hashAndSalt([]byte(user.Password))
-	res := tx.Save(&user)
-	if res.Error != nil {
-		log.Errorf("insert user error %v", res.Error)
-		return nil, res.Error
-	}
-	return &user, nil
-}
-
-// Обновление пользователя
-func (db *userConnection) UpdateUser(ctx context.Context, user model.User) (*model.User, error) {
-	tx := db.connection.WithContext(ctx)
-	if user.Password != "" {
-		user.Password = hashAndSalt([]byte(user.Password))
-	} else {
-		var tempUser model.User
-		tx.Find(&tempUser, user.ID)
-		user.Password = tempUser.Password
-	}
-
-	res := tx.Save(&user)
-	if res.Error != nil {
-		log.Errorf("update user error %v", res.Error)
-		return nil, res.Error
-	}
-	return &user, nil
-}
-
-func (db *userConnection) VerifyCredential(ctx context.Context, email string) (*model.User, error) {
-	tx := db.connection.WithContext(ctx)
-	var user model.User
-	res := tx.Where("email = ?", email).Take(&user)
-	if res.Error != nil {
-		log.Errorf("verify credential error %v", res.Error)
-		return nil, res.Error
-	}
-	return &user, nil
-}
-
-// Проверка на наличие одинаковых email
-func (db *userConnection) IsDuplicateEmail(ctx context.Context, email string) (bool, error) {
+func (db *userConnection) IsDuplicateUserTGID(ctx context.Context, tgID int) (bool, error) {
 	var user *model.User
-	res := db.connection.WithContext(ctx).Where("email = ?", email).Take(&user)
-	if res.Error != nil {
-		log.Errorf("is duplicate email error %v", res.Error)
+	res := db.connection.WithContext(ctx).Where("user_tg_id = ?", tgID).Take(&user)
+	if errors.Is(gorm.ErrRecordNotFound, res.Error) {
+		return true, res.Error
+	} else if res.Error != nil {
+		db.log.Error(res.Error)
 		return true, res.Error
 	}
 	return false, nil
 }
 
-// Поиск пользователя по email
-func (db *userConnection) FindByEmail(ctx context.Context, email string) (*model.User, error) {
+func (db *userConnection) FindUserByTgUserId(
+	ctx context.Context,
+	userTgId int,
+) (*model.User, error) {
+
 	tx := db.connection.WithContext(ctx)
 	var user model.User
-	res := tx.Where("email = ?", email).Take(&user)
+	res := tx.Where(`"user_tg_id" = ?`, userTgId).Find(&user)
 	if res.Error != nil {
-		log.Errorf("find by email user error %v", res.Error)
+		db.log.Errorf("find user by user_tg_id error %v", res.Error)
+		return nil, res.Error
+	}
+	return &user, nil
+}
+
+// Добавление пользователя
+func (db *userConnection) InsertUser(ctx context.Context, user model.User) (*model.User, error) {
+	tx := db.connection.WithContext(ctx)
+	res := tx.Save(&user)
+	db.log.Println(errors.Is(res.Error, gorm.ErrRecordNotFound))
+	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+		db.log.Errorf("insert user error %v", res.Error)
 		return nil, res.Error
 	}
 	return &user, nil
@@ -101,19 +75,16 @@ func (db *userConnection) FindByEmail(ctx context.Context, email string) (*model
 func (db *userConnection) ProfileUser(ctx context.Context, userID string) (*model.User, error) {
 	tx := db.connection.WithContext(ctx)
 	var user model.User
-	res := tx.Preload("Items").Preload("Items.User").Find(&user, userID)
+
+	// .Preload("Posts")
+	res := tx.Preload("Categories").Where(
+		`"user_tg_id" = ?`,
+		userID,
+	).Find(&user)
+	db.log.Info(res.QueryFields)
 	if res.Error != nil {
-		log.Errorf("profile user error %v", res.Error)
+		db.log.Errorf("profile user error %v", res.Error)
 		return nil, res.Error
 	}
 	return &user, nil
-}
-
-// Хеширование пароля при сохранении
-func hashAndSalt(pwd []byte) string {
-	hash, err := bcrypt.GenerateFromPassword(pwd, bcrypt.MinCost)
-	if err != nil {
-		log.Errorf("Failed to hash a password %v", err)
-	}
-	return string(hash)
 }

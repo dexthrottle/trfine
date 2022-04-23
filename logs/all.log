@@ -1,0 +1,8 @@
+[36mINFO[0m[2022-04-23T16:37:16+03:00]github.com/dexthrottle/trfine/internal/app.Run() app.go:25 config init                                  
+[36mINFO[0m[2022-04-23T16:37:16+03:00]github.com/dexthrottle/trfine/internal/repository.NewPostgresDB() db.go:24 Migration Successfully                       
+[36mINFO[0m[2022-04-23T16:37:16+03:00]github.com/dexthrottle/trfine/internal/app.Run() app.go:31 Connect to database successfully!            
+[36mINFO[0m[2022-04-23T16:37:16+03:00]github.com/dexthrottle/trfine/internal/app.Run() app.go:36 Connect repository successfully!             
+[36mINFO[0m[2022-04-23T16:37:16+03:00]github.com/dexthrottle/trfine/internal/app.Run() app.go:38 Connect services successfully!               
+[36mINFO[0m[2022-04-23T16:37:16+03:00]github.com/dexthrottle/trfine/internal/app.Run() app.go:40 Connect services successfully!               
+[36mINFO[0m[2022-04-23T16:37:16+03:00]github.com/dexthrottle/trfine/internal/app.Run() app.go:53 Server started on http://127.0.0.1:10000 Gin MODE = debug 
+[36mINFO[0m[2022-04-23T16:43:08+03:00]github.com/dexthrottle/trfine/internal/app.Run() app.go:61 Server stopped                               

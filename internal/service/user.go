@@ -6,47 +6,70 @@ import (
 	"github.com/dexthrottle/trfine/internal/dto"
 	"github.com/dexthrottle/trfine/internal/model"
 	"github.com/dexthrottle/trfine/internal/repository"
-	log "github.com/dexthrottle/trfine/pkg/logger"
+	"github.com/dexthrottle/trfine/pkg/logging"
 	"github.com/mashingan/smapping"
 )
 
 type UserService interface {
-	Update(ctx context.Context, user dto.UserUpdateDTO) (*model.User, error)
+	Insert(ctx context.Context, user dto.CreateUserDTO) (*model.User, error)
 	Profile(ctx context.Context, userID string) (*model.User, error)
+	IsDuplicateUserTGID(ctx context.Context, tgID int) (bool, error)
+	FindUserByTgUserId(ctx context.Context, userTgId int) (*model.User, error)
 }
 
 type userService struct {
 	ctx            context.Context
 	userRepository repository.UserRepository
+	log            logging.Logger
 }
 
-func NewUserService(ctx context.Context, userRepo repository.UserRepository) UserService {
+func NewUserService(ctx context.Context, userRepo repository.UserRepository, log logging.Logger) UserService {
 	return &userService{
 		ctx:            ctx,
 		userRepository: userRepo,
+		log:            log,
 	}
 }
 
-// Обновить пользователя
-func (service *userService) Update(ctx context.Context, user dto.UserUpdateDTO) (*model.User, error) {
-	userToUpdate := model.User{}
-	err := smapping.FillStruct(&userToUpdate, smapping.MapFields(&user))
+func (service *userService) IsDuplicateUserTGID(ctx context.Context, tgID int) (bool, error) {
+	res, err := service.userRepository.IsDuplicateUserTGID(ctx, tgID)
 	if err != nil {
-		log.Errorf("Failed map %v:", err)
+		return false, err
 	}
-	updatedUser, err := service.userRepository.UpdateUser(ctx, userToUpdate)
+	return res, nil
+}
+
+// Обновить пользователя
+func (s *userService) Insert(ctx context.Context, user dto.CreateUserDTO) (*model.User, error) {
+	userToCreate := model.User{}
+	err := smapping.FillStruct(&userToCreate, smapping.MapFields(&user))
 	if err != nil {
-		log.Errorf("update user error: %v", err)
+		s.log.Errorf("Failed map %v:", err)
+		return nil, err
+	}
+	updatedUser, err := s.userRepository.InsertUser(ctx, userToCreate)
+	if err != nil {
+		s.log.Errorf("insert user error: %v", err)
+		return nil, err
 	}
 	return updatedUser, nil
 }
 
 // Профиль пользователя
-func (service *userService) Profile(ctx context.Context, userID string) (*model.User, error) {
-	userProfile, err := service.userRepository.ProfileUser(ctx, userID)
+func (s *userService) Profile(ctx context.Context, userID string) (*model.User, error) {
+	userProfile, err := s.userRepository.ProfileUser(ctx, userID)
 	if err != nil {
-		log.Errorf("profile user error: %v", err)
+		s.log.Errorf("profile user error: %v", err)
 		return nil, err
 	}
 	return userProfile, nil
+}
+
+func (s *userService) FindUserByTgUserId(ctx context.Context, userTgId int) (*model.User, error) {
+	user, err := s.userRepository.FindUserByTgUserId(ctx, userTgId)
+	if err != nil {
+		s.log.Errorf("is allowed to edit user error: %v", err)
+		return nil, err
+	}
+	return user, nil
 }

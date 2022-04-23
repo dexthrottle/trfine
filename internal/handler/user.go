@@ -1,57 +1,56 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
-	"strconv"
-
-	"github.com/dgrijalva/jwt-go"
-	"github.com/gin-gonic/gin"
 
 	"github.com/dexthrottle/trfine/internal/dto"
 	"github.com/dexthrottle/trfine/internal/helper"
-	log "github.com/dexthrottle/trfine/pkg/logger"
+	"github.com/gin-gonic/gin"
 )
 
-func (c *Handler) UpdateUser(ctx *gin.Context) {
-	var userUpdateDTO dto.UserUpdateDTO
-	errDTO := ctx.ShouldBind(&userUpdateDTO)
+func (c *Handler) CreateUser(ctx *gin.Context) {
+	var createDTO dto.CreateUserDTO
+	errDTO := ctx.ShouldBind(&createDTO)
 	if errDTO != nil {
-		res := helper.BuildErrorResponse("Failed to process request", errDTO.Error(), helper.EmptyObj{})
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, res)
+		response := helper.BuildErrorResponse("Failed to process request", errDTO.Error(), helper.EmptyObj{})
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, response)
 		return
 	}
 
-	authHeader := ctx.GetHeader("Authorization")
-	token, errToken := c.service.JWT.ValidateToken(authHeader)
-	if errToken != nil {
-		log.Errorf("token is valid: %v", errToken)
+	userStatus, err := c.service.User.IsDuplicateUserTGID(ctx, createDTO.UserTGId)
+	c.log.Errorln(err)
+	if err == nil || userStatus {
+		response := helper.BuildErrorResponse("Failed to process request", "Duplicate user_tg_id", helper.EmptyObj{})
+		ctx.JSON(http.StatusConflict, response)
+		return
+	} else {
+		createdUser, err := c.service.User.Insert(ctx, createDTO)
+		if err != nil {
+			c.log.Errorf("create user failed: %v", err)
+			response := helper.BuildErrorResponse("Failed to process request", err.Error(), helper.EmptyObj{})
+			ctx.JSON(http.StatusConflict, response)
+			return
+		}
+		response := helper.BuildResponse(true, "OK!", createdUser)
+		ctx.JSON(http.StatusCreated, response)
 	}
-	claims := token.Claims.(jwt.MapClaims)
-	id, err := strconv.ParseUint(fmt.Sprintf("%v", claims["user_id"]), 10, 64)
-	if err != nil {
-		panic(err.Error())
-	}
-	userUpdateDTO.ID = id
-	user, err := c.service.User.Update(ctx, userUpdateDTO)
-	if err != nil {
-		log.Errorf("update user error %v", err)
-	}
-	res := helper.BuildResponse(true, "OK!", user)
-	ctx.JSON(http.StatusOK, res)
 }
 
 func (c *Handler) ProfileUser(ctx *gin.Context) {
-	authHeader := ctx.GetHeader("Authorization")
-	token, err := c.service.JWT.ValidateToken(authHeader)
-	if err != nil {
-		panic(err.Error())
-	}
-	claims := token.Claims.(jwt.MapClaims)
-	id := fmt.Sprintf("%v", claims["user_id"])
+
+	id := ctx.GetHeader("user_tg_id")
 	user, err := c.service.User.Profile(ctx, id)
 	if err != nil {
-		log.Errorf("profile user error : %v", err)
+		c.log.Errorf("profile user error: %v", err)
+		response := helper.BuildErrorResponse("Failed to process request", err.Error(), helper.EmptyObj{})
+		ctx.JSON(http.StatusConflict, response)
+		return
+	}
+
+	if user.UserTGId == 0 {
+		response := helper.BuildErrorResponse("Failed to process request", "Такого пользователя нет", helper.EmptyObj{})
+		ctx.JSON(http.StatusNotFound, response)
+		return
 	}
 	res := helper.BuildResponse(true, "OK", user)
 	ctx.JSON(http.StatusOK, res)

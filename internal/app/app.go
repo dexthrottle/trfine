@@ -4,45 +4,53 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
-
-	"os"
 
 	"github.com/dexthrottle/trfine/internal/config"
 	"github.com/dexthrottle/trfine/internal/handler"
 	"github.com/dexthrottle/trfine/internal/repository"
 	"github.com/dexthrottle/trfine/internal/service"
-	log "github.com/dexthrottle/trfine/pkg/logger"
+	"github.com/dexthrottle/trfine/pkg/logging"
 	"github.com/dexthrottle/trfine/pkg/server"
+	"github.com/gin-gonic/gin"
 )
 
 func Run() {
-
+	logging.Init()
+	log := logging.GetLogger()
 	cfg := config.GetConfig()
-	db, err := repository.NewPostgresDB(cfg)
-	if err != nil {
-		log.Error(err)
-	}
+	log.Info("config init")
 
+	db, err := repository.NewPostgresDB(cfg, &log)
+	if err != nil {
+		panic("database connect error" + err.Error())
+	}
 	log.Info("Connect to database successfully!")
 
 	ctx := context.Background()
 
-	repos := repository.NewRepository(ctx, db)
-	services := service.NewService(ctx, *repos)
-	handlers := handler.NewHandler(services)
+	repos := repository.NewRepository(ctx, db, log)
+	log.Info("Connect repository successfully!")
+	services := service.NewService(ctx, *repos, log)
+	log.Info("Connect services successfully!")
+	handlers := handler.NewHandler(services, log)
+	log.Info("Connect services successfully!")
 
 	srv := server.NewServer(cfg.App.Port, handlers.InitRoutes())
+	if cfg.App.GinMode == "release" {
+		gin.SetMode(gin.ReleaseMode)
+	}
 
 	go func() {
 		if err := srv.Run(); !errors.Is(err, http.ErrServerClosed) {
-			log.Errorf("error occurred while running http server: %s\n", err.Error())
+			panic("error occurred while running http server: " + err.Error())
 		}
 	}()
 
-	log.Info("Server started on http://127.0.0.1:" + cfg.App.Port)
+	log.Info("Server started on http://127.0.0.1:" + cfg.App.Port + " Gin MODE = " + gin.Mode())
 
 	// Graceful Shutdown
 	quit := make(chan os.Signal, 1)

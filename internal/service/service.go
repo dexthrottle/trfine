@@ -6,47 +6,38 @@ import (
 	"github.com/dexthrottle/trfine/internal/dto"
 	"github.com/dexthrottle/trfine/internal/model"
 	"github.com/dexthrottle/trfine/internal/repository"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/dexthrottle/trfine/pkg/logging"
 )
 
-type Auth interface {
-	VerifyCredential(ctx context.Context, email string, password string) (*model.User, error)
-	CreateUser(ctx context.Context, user dto.RegisterDTO) (*model.User, error)
-	FindByEmail(ctx context.Context, email string) (*model.User, error)
-	IsDuplicateEmail(ctx context.Context, email string) (bool, error)
-}
-
-type JWT interface {
-	GenerateToken(userID string) string
-	ValidateToken(token string) (*jwt.Token, error)
-}
-
-type Item interface {
-	Insert(ctx context.Context, b dto.ItemCreateDTO) (*model.Item, error)
-	Update(ctx context.Context, b dto.ItemUpdateDTO) (*model.Item, error)
-	Delete(ctx context.Context, b model.Item) error
-	All(ctx context.Context) ([]*model.Item, error)
-	FindByID(ctx context.Context, itemID uint64) (*model.Item, error)
-	IsAllowedToEdit(ctx context.Context, userID string, itemID uint64) (bool, error)
+type Post interface {
+	Insert(ctx context.Context, b dto.PostCreateDTO) (*model.Post, error)
+	Delete(ctx context.Context, b model.Post, userId int) error
+	All(ctx context.Context, userTgId int) ([]*model.Post, error)
 }
 
 type User interface {
-	Update(ctx context.Context, user dto.UserUpdateDTO) (*model.User, error)
+	Insert(ctx context.Context, user dto.CreateUserDTO) (*model.User, error)
 	Profile(ctx context.Context, userID string) (*model.User, error)
+	IsDuplicateUserTGID(ctx context.Context, tgID int) (bool, error)
+	FindUserByTgUserId(ctx context.Context, userTgId int) (*model.User, error)
+}
+
+type Category interface {
+	Insert(ctx context.Context, p dto.CreateCategoryDTO) (*model.Category, error)
+	Delete(ctx context.Context, b model.Category, userId int) error
+	All(ctx context.Context, userTgId int) ([]*model.Category, error)
 }
 
 type Service struct {
-	Auth
-	JWT
-	Item
+	Post
 	User
+	Category
 }
 
-func NewService(ctx context.Context, r repository.Repository) *Service {
+func NewService(ctx context.Context, r repository.Repository, log logging.Logger) *Service {
 	return &Service{
-		Auth: NewAuthService(ctx, r.User),
-		JWT:  NewJWTService(),
-		Item: NewItemService(ctx, r.Item),
-		User: NewUserService(ctx, r.User),
+		Post:     NewPostService(ctx, r.Post, log),
+		User:     NewUserService(ctx, r.User, log),
+		Category: NewCategoryService(ctx, r.Category, log),
 	}
 }
