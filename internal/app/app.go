@@ -19,7 +19,7 @@ import (
 )
 
 func Run() {
-	// TODO: сделать сканы от пользователя если файлы .env нет
+	firstStart()
 
 	logging.Init(true)
 	log := logging.GetLogger()
