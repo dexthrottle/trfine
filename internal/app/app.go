@@ -19,7 +19,9 @@ import (
 )
 
 func Run() {
-	logging.Init(false)
+	// TODO: сделать сканы от пользователя если файлы .env нет
+
+	logging.Init(true)
 	log := logging.GetLogger()
 
 	cfg := config.GetConfig()
@@ -39,11 +41,10 @@ func Run() {
 	log.Info("Connect services successfully!")
 	handlers := handler.NewHandler(services, log)
 	log.Info("Connect handlers successfully!")
-
-	srv := server.NewServer(cfg.App.Port, handlers.InitRoutes())
 	if cfg.App.GinMode == "release" {
 		gin.SetMode(gin.ReleaseMode)
 	}
+	srv := server.NewServer(cfg.App.Port, handlers.InitRoutes())
 
 	go func() {
 		if err := srv.Run(); !errors.Is(err, http.ErrServerClosed) {

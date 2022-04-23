@@ -76,7 +76,7 @@ func Init(useLogs bool) {
 		}
 	}
 
-	l.SetLevel(logrus.TraceLevel)
+	l.SetLevel(logrus.PanicLevel)
 
 	e = logrus.NewEntry(l)
 }
