@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -19,7 +20,15 @@ import (
 )
 
 func Run() {
-	firstStart()
+	fmt.Println(welcomeMessage)
+
+	for {
+		stateAppConfig := firstStart()
+		if stateAppConfig {
+			break
+		}
+		panic("Случилось зло. Убиваемся")
+	}
 
 	logging.Init(true)
 	log := logging.GetLogger()

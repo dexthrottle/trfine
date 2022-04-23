@@ -12,19 +12,39 @@ const (
 	welcomeMessage = "Привет @username! Выполните настройку перед первым запуском:"
 )
 
-func firstStart() {
+func firstStart() bool {
 	if _, err := os.Stat("trbotdatabase.db"); os.IsNotExist(err) {
-		fmt.Println(welcomeMessage)
-		tgApiToken := fmt.Sprintln("")
-		byBitUID := fmt.Sprintln("")
-		byBitApiKey := fmt.Sprintln("")
-		byBitApiSecret := fmt.Sprintln("")
-		tgUserID, err := strconv.Atoi(fmt.Sprintln(""))
-		if err != nil {
-			fmt.Println(err)
+		tgApiToken := fmt.Sprintln("Введите токен телеграм-бота: ")
+
+		var byBitUID int
+		for {
+			byBitUID, err = strconv.Atoi(fmt.Sprintln("Введите ByBit UID: "))
+			if err != nil {
+				fmt.Println("Введите корректный ByBit UID!")
+				continue
+			}
+			break
 		}
-		useLogs := fmt.Sprintln("")
-		tgNotificationChannel := fmt.Sprintln("")
+
+		byBitApiKey := fmt.Sprintln("Введите ByBit ApiKey: ")
+		byBitApiSecret := fmt.Sprintln("Введите ByBit ApiSecret: ")
+
+		var tgUserID int
+		for {
+			tgUserID, err = strconv.Atoi(fmt.Sprintln("Введите Ваш телегам-ID: "))
+			if err != nil {
+				fmt.Println("Введите корректный телегам-ID!")
+				continue
+			}
+			break
+		}
+
+		useLogs := false
+		useLogsText := fmt.Sprintln("Включить логгирование? (Y/n): ")
+		if useLogsText == "Y" || useLogsText == "y" {
+			useLogs = true
+		}
+		tgNotificationChannel := fmt.Sprintln("Введите название телеграм-канала: ")
 
 		appCfgDto := dto.AppConfigDTO{
 			TgApiToken:            tgApiToken,
@@ -35,5 +55,7 @@ func firstStart() {
 			UseLogs:               useLogs,
 			TGNotificationChannel: tgNotificationChannel,
 		}
+		fmt.Println(appCfgDto)
 	}
+	return true
 }
