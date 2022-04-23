@@ -1,6 +1,7 @@
 package app
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
@@ -20,20 +21,21 @@ import (
 )
 
 func Run() {
-	fmt.Println(welcomeMessage)
+	reader := bufio.NewReader(os.Stdin)
+	useLogs := false
+	fmt.Print("Включить логгирование? (Y/n): ")
+	useLogsText, _ := reader.ReadString('\n')
+	if useLogsText == "Y" || useLogsText == "y" {
+		useLogs = true
 
-	for {
-		stateAppConfig := firstStart()
-		if stateAppConfig {
-			break
-		}
-		panic("Случилось зло. Убиваемся")
 	}
+	fmt.Print("Введите порт для запуска приложения: ")
+	portApp, _ := reader.ReadString('\n')
 
-	logging.Init(true)
+	logging.Init(useLogs)
 	log := logging.GetLogger()
 
-	cfg := config.GetConfig()
+	cfg := config.GetConfig(useLogs, portApp)
 	log.Info("config init")
 
 	db, err := repository.NewPostgresDB(cfg, &log)
@@ -41,6 +43,14 @@ func Run() {
 		panic("database connect error" + err.Error())
 	}
 	log.Info("Connect to database successfully!")
+
+	for {
+		stateAppConfig := firstStart()
+		if stateAppConfig {
+			break
+		}
+		panic("Случилось зло. Убиваемся!")
+	}
 
 	ctx := context.Background()
 

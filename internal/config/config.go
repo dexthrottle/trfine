@@ -11,8 +11,11 @@ type Config struct {
 }
 
 // Конфигурация приложения ----- debug | release | test
-func GetConfig() *Config {
-
+func GetConfig(useLogs bool, port string) *Config {
+	ginMode := "release"
+	if useLogs {
+		ginMode = "debug"
+	}
 	return &Config{
 		Database: struct {
 			DBName string
@@ -23,8 +26,8 @@ func GetConfig() *Config {
 			Port    string
 			GinMode string
 		}{
-			Port:    "10000",
-			GinMode: "debug",
+			Port:    port,
+			GinMode: ginMode,
 		},
 	}
 }

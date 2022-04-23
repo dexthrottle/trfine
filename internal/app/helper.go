@@ -1,6 +1,7 @@
 package app
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"strconv"
@@ -14,11 +15,14 @@ const (
 
 func firstStart() bool {
 	if _, err := os.Stat("trbotdatabase.db"); os.IsNotExist(err) {
-		tgApiToken := fmt.Sprintln("Введите токен телеграм-бота: ")
-
+		reader := bufio.NewReader(os.Stdin)
+		fmt.Print("Введите токен телеграм-бота: ")
+		tgApiToken, _ := reader.ReadString('\n')
 		var byBitUID int
 		for {
-			byBitUID, err = strconv.Atoi(fmt.Sprintln("Введите ByBit UID: "))
+			fmt.Print("Введите ByBit UID: ")
+			byBitUIDStr, _ := reader.ReadString('\n')
+			byBitUID, err = strconv.Atoi(byBitUIDStr)
 			if err != nil {
 				fmt.Println("Введите корректный ByBit UID!")
 				continue
@@ -26,12 +30,16 @@ func firstStart() bool {
 			break
 		}
 
-		byBitApiKey := fmt.Sprintln("Введите ByBit ApiKey: ")
-		byBitApiSecret := fmt.Sprintln("Введите ByBit ApiSecret: ")
+		fmt.Print("Введите ByBit ApiKey: ")
+		byBitApiKey, _ := reader.ReadString('\n')
+		fmt.Print("Введите ByBit ApiSecret: ")
+		byBitApiSecret, _ := reader.ReadString('\n')
 
 		var tgUserID int
 		for {
-			tgUserID, err = strconv.Atoi(fmt.Sprintln("Введите Ваш телегам-ID: "))
+			fmt.Print("Введите Ваш телегам-ID: ")
+			tgUserIDStr, _ := reader.ReadString('\n')
+			tgUserID, err = strconv.Atoi(tgUserIDStr)
 			if err != nil {
 				fmt.Println("Введите корректный телегам-ID!")
 				continue
@@ -39,20 +47,15 @@ func firstStart() bool {
 			break
 		}
 
-		useLogs := false
-		useLogsText := fmt.Sprintln("Включить логгирование? (Y/n): ")
-		if useLogsText == "Y" || useLogsText == "y" {
-			useLogs = true
-		}
 		tgNotificationChannel := fmt.Sprintln("Введите название телеграм-канала: ")
 
 		appCfgDto := dto.AppConfigDTO{
-			TgApiToken:            tgApiToken,
-			ByBitUID:              byBitUID,
-			ByBitApiKey:           byBitApiKey,
-			ByBitApiSecret:        byBitApiSecret,
-			TGUserID:              tgUserID,
-			UseLogs:               useLogs,
+			TgApiToken:     tgApiToken,
+			ByBitUID:       byBitUID,
+			ByBitApiKey:    byBitApiKey,
+			ByBitApiSecret: byBitApiSecret,
+			TGUserID:       tgUserID,
+			// UseLogs:               useLogs,
 			TGNotificationChannel: tgNotificationChannel,
 		}
 		fmt.Println(appCfgDto)
