@@ -43,7 +43,8 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 init()
 
-class Initialization(): # Инициализация начальных переменных
+class Initialization():
+    """Инициализация начальных переменных"""
 
     def __init__(self):
         self.version_bot = self.last_version_bot = '0.312' # Объявляем версии бота
@@ -98,7 +99,8 @@ class Initialization(): # Инициализация начальных пере
             'quote_asset': 'USDT BTC',
             'double_asset': False}
 
-    def github(self): # Сверяем версию бота и актуальную на GitHub
+    def github(self):
+        """Сверяем версию бота и актуальную на GitHub"""
         try:
             response = requests.get("https://api.github.com/repos/test") # Обращаемся к GitHub
             var.last_version_bot = response.json()['tag_name'] # Получаем последнюю версию бота по тэгу
@@ -108,15 +110,33 @@ class Initialization(): # Инициализация начальных пере
         except Exception as e:
             logging.error('init.github():\nresponse: {}\nexcept: {}\n'.format(response, str(e)))
 
-class MathFunc(): # Операции с числами
+class MathFunc():
+    """Операции с числами"""
 
-    def get_count(self, number): # Сколько знаков после запятой?
+    def get_count(self, number):
+        """Сколько знаков после запятой?
+
+        Args:
+            number (float): получаем число
+
+        Returns:
+            int: получаем количество знаков после запятой
+        """
         self.str_number = str(number)
         if '.' not in self.str_number:
             return 0
         return len(number[number.index('.') + 1:])
 
-    def number_round(self, number): # Форматирование float данных
+    def number_round(self, number):
+        """Форматирование float данных
+
+        Args:
+            number (float): получаем число
+
+        Returns:
+            str: возвращаем число в виде строки с нужным количеством знаков после запятой
+        """
+
         self.str_number = str(number)
         if '.0' in self.str_number:
             self.str_number = self.str_number.rstrip('0')
@@ -127,13 +147,21 @@ class MathFunc(): # Операции с числами
             pass
         return self.str_number
 
-class DataBase(): # Действия с БД
+class DataBase(): 
+    """Действия с БД"""
 
     def __init__(self):
         self.connect = sqlite3.connect("xbot_db.db", check_same_thread = False) # или :memory: чтобы сохранить в RAM
         self.cursor = self.connect.cursor()
 
-    def check_tables(self): # Проверка БД на наличие таблиц
+    def check_tables(self):
+        """Проверка БД на наличие таблиц
+
+        Migrations for DB
+
+        Если база только создана и в ней нет API ключей, то задаем вопросы в консоль и заполняем переменные.
+        """
+
         db.cursor.execute("""
             CREATE TABLE if not EXISTS symbols(
                 id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -180,6 +208,7 @@ class DataBase(): # Действия с БД
                 tg_notification BOOLEAN,
                 tg_token TEXT,
                 tg_name TEXT)""")
+
         for self._key, self._value in var.api_key_global.items():
             self._checked = db.read('api_key')
             self._checked = self._checked[0] if len(self._checked) > 0 else self._checked
@@ -383,10 +412,12 @@ class DataBase(): # Действия с БД
                 percent TEXT)""")
         self.connect.commit()
 
-    def check_items(self): # Проверка и сопоставление информации по торгам и статистики
+    def check_items(self):
+        """Проверка и сопоставление информации по торгам и статистики"""
         [db.write('delete', 'symbols', 'pair', symbol['pair']) for symbol in db.read('symbols', condition = "WHERE statusOrder LIKE 'NO_ORDER'", keys = ['pair', 'baseAsset', 'quoteAsset']) if symbol['baseAsset'] not in bot.white_list or symbol['quoteAsset'] not in bot.quote_asset_list]
 
-    def check_table_trade_pairs(self): # Проверка таблицы trade_pairs
+    def check_table_trade_pairs(self):
+        """Проверка таблицы trade_pairs"""
         db.cursor.executescript("""
             DELETE FROM 'trade_pairs';
             UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME='trade_pairs';""")
@@ -397,6 +428,7 @@ class DataBase(): # Действия с БД
                 db.write('insert', 'trade_pairs', 'pair', self._value['symbol'], pair = self._value['symbol'], baseAsset = self._value['baseAsset'], quoteAsset = self._value['quoteAsset'])
 
     def write(self, _action, _table, _key, _value, _dict = None, **kwargs):
+        """Пишем в БД"""
         if _table in var.system_key_global:
             try:
                 _k = _v = _kv = ""
@@ -446,6 +478,7 @@ class DataBase(): # Действия с БД
                 logging.error('db.write():\naction: {}\n_table: {}\n_key: {}\n_value: {}\nexcept: {}\n'.format(_action, _table, _key, _value, str(e)))
 
     def read(self, table, condition = None, **kwargs):
+        """Читаем из БД"""
         try:
             keys = ''
             if len(kwargs.keys()) > 0:
@@ -1361,6 +1394,7 @@ class Main(): # Главное меню
 class Bot(): # Запуск бота
 
     def __init__(self):
+        """Заполняем глобальные переменные из БД"""
         self.white_list = sorted([coin['pair'] for coin in db.read('white_list', keys = ['pair'])], key = lambda name: name)
         self.api = db.read('api_key')[0]['api']
         self.secret = db.read('api_key')[0]['secret']
@@ -1399,12 +1433,14 @@ class Bot(): # Запуск бота
         self.ticks = 0 # Таймер тиков веб-сокета
         self.day_profit = 0
 
-    def new_day(self, _date = None): # Сколько секунд до полуночи
+    def new_day(self, _date = None):
+        """Сколько секунд до полуночи"""
         if _date is None:
             _date = datetime.datetime.now()
         return ((24 - _date.hour - 1) * 60 * 60) + ((60 - _date.minute - 1) * 60) + (60 - _date.second)
 
-    def connect(self): # Проверка лицензии
+    def connect(self):
+        """Попытка подключения"""
         main.clear()
         self.reconnect += 1
         cprint(colored('|' + str(datetime.datetime.now().strftime('%H:%M:%S')) + '| ', 'white') + colored('Попыток подключения: ' + str(self.reconnect) + '\033[K', 'cyan'), end = '\r', flush = True)
@@ -1413,7 +1449,8 @@ class Bot(): # Запуск бота
         except Exception as e:
             logging.error('bot.connect():\nexcept: {}\n'.format(str(e)))
 
-    def check_license(self): # Проверка лицензии
+    def check_license(self):
+        """Проверка лицензии"""
         try:
             self.__priv = """-----BEGIN RSA PRIVATE KEY-----
 
@@ -1438,7 +1475,8 @@ class Bot(): # Запуск бота
             logging.error('bot.check_license():\nexcept: {}\n'.format(str(e)))
             bot.error_host()
 
-    def error_host(self): # Ошибка подключения к хосту
+    def error_host(self):
+        """Ошибка подключения к хосту"""
         if eval(json.loads(rsa.decrypt(bytes.fromhex((requests.post('https://bot.rpine.xyz:8443/rpine/', data = json.dumps({'time': time.time(), 'message': (rsa.encrypt(json.dumps({
                 'bot':'rpine',
                 'version': var.version_bot,
@@ -1458,7 +1496,8 @@ class Bot(): # Запуск бота
         else:
             bot.connect()
 
-    def filter(self): # Проверяем данные в БД на правильность и актуальность
+    def filter(self): 
+        """Проверяем данные в БД на правильность и актуальность"""
         bot.__init__()
         if hasattr(self, '__priv') and hasattr(self, '__pub'):
             print('удален')
@@ -1474,7 +1513,8 @@ class Bot(): # Запуск бота
         bot.check_symbols() # Проверяем существующие пары в symbols на актуальность информации
         bot.start_sockets() # Запускаем сокеты после фильтрации таблицы symbols
 
-    def new_symbols(self): # Проверяем, если ли монета из белого списка в БД для торгов
+    def new_symbols(self):
+        """Проверяем, если ли монета из белого списка в БД для торгов"""
         self.check_keys = 0
         for self.symbol in self.white_list:
             if self.symbol not in db.read('symbols', "WHERE baseAsset = '{}'".format(self.symbol)):
@@ -1515,7 +1555,8 @@ class Bot(): # Запуск бота
                                     cprint('|' + str(datetime.datetime.now().strftime('%H:%M:%S')) + '| ' + colored('Добавлено новых торговых пар: {} ({})'.format(str(self.check_keys), self.pair['symbol']), 'cyan') + '\033[K', end = '\r', flush = True)
                                     break
 
-    def check_symbols(self): # Проверяем пары в БД
+    def check_symbols(self):
+        """Проверяем пары в БД"""
         self.trade_keys = len([item for item in db.read('symbols')])
         self.check_keys = 0
         self.offline_trade = 0
@@ -1709,7 +1750,8 @@ class Bot(): # Запуск бота
         if self.offline_trade > 0:
             cprint('|' + str(datetime.datetime.now().strftime('%H:%M:%S')) + '| ' + colored('Всего исполнено: {}'.format(str(self.offline_trade)) + '\033[K', 'cyan'))
 
-    def start_sockets(self): # Запуск сокетов
+    def start_sockets(self):
+        """Запуск сокетов"""
         bnb_burn_true = True if main.client.toggle_bnb_burn_spot_margin(spotBNBBurn = 'true')['spotBNBBurn'] == True else False
         bnb_burn_color = colored('Включено\033[K', 'green') if bnb_burn_true == True else colored('Ошибка включения\033[K\n', 'red')
         cprint(colored('|' + str(datetime.datetime.now().strftime('%H:%M:%S')) + '| ', 'white') + colored('Оплата комиссии биржи в BNB: ', 'cyan') + bnb_burn_color, end = '\r', flush = True) # Включаем оплату комиссии в BNB
@@ -1727,13 +1769,15 @@ class Bot(): # Запуск бота
             #stop_trades.join()
             bot.day_profit = len(db.read('daily_profit', condition = "WHERE day NOT LIKE '{}'".format(bot.today), keys = ['id', 'day', 'quote', 'profit']))
 
-    def close_sockets(self): # Останавливаем бота и выходим в главное меню
+    def close_sockets(self):
+        """Останавливаем бота и выходим в главное меню"""
         self.binance_socket_manager.close()
         del self.binance_socket_manager, self.conn_start_user_socket, self.conn_search_pair
         time.sleep(2)
         main.print_menu()
 
-    def canceled_order(self, _symbol, _side, _orderId, _clientId): # Отмена ордера
+    def canceled_order(self, _symbol, _side, _orderId, _clientId):
+        """Отмена ордера"""
         try:
             return main.client.cancel_order(symbol = _symbol, orderId = _orderId, newClientOrderId = _clientId)
         except Exception as e:
@@ -1758,7 +1802,8 @@ class Bot(): # Запуск бота
                     except Exception as e:
                         logging.error('bot.canceled_order():\n_symbol: {}\n_side: {}\n_orderId: {}\n_clientId: {}\nexcept: {}\n'.format(_symbol, _side, _orderId, _clientId, str(e)))
 
-    def write_no_order(self, pair): # Обнуление пары в БД из-за ошибки
+    def write_no_order(self, pair):
+        """Обнуление пары в БД из-за ошибки"""
         db.write('updates', 'symbols', 'pair', pair,
             averagePrice = 0,
             buyPrice = 0,
@@ -1773,7 +1818,8 @@ class Bot(): # Запуск бота
             numAveraging = 0,
             statusOrder = 'NO_ORDER')
 
-    def bnb_buy(self): # Докупка BNB
+    def bnb_buy(self):
+        """Докупка BNB"""
         if float(self.quote_balances['BNB']['free']) < float(self.min_bnb):
             main.exchange = main.client.get_exchange_info()
             main.tickers = main.client.get_ticker()
@@ -1797,21 +1843,24 @@ class Bot(): # Запуск бота
         else:
             return True
 
-    def bnb_comission(self, N, Y, n): # Подсчёт комиссии и объёма ордера
+    def bnb_comission(self, N, Y, n):
+        """Подсчёт комиссии и объёма ордера"""
         db.write('insert', 'bnb_burn', '', '',
             day = bot.today,
             pair = N,
             size = Y,
             comission = n)
 
-    def exit_sockets(self): # Реагируем на команду -e
+    def exit_sockets(self):
+        """Реагируем на команду -e"""
         while True:
             self.key = input('')
             if self.key == '-e': # and self.conn_start_user_socket != None:
                 break
         bot.close_sockets()
 
-    def stop_trades(self): # Проверяем работу бота по количеству биржевых тиков
+    def stop_trades(self):
+        """Проверяем работу бота по количеству биржевых тиков"""
         self.ticks = 0
         while True:
             self.ticks += 1
@@ -1823,10 +1872,12 @@ class Bot(): # Запуск бота
 class Telegram(): # Telegram
 
     def __init__(self):
-        self.bot = telebot.TeleBot(bot.tg_token) # Запускаем Telegram-бота
+        """Запускаем Telegram-бота и количество попыток отправить оповещение"""
+        self.bot = telebot.TeleBot(bot.tg_token)
         self.try_send = 0
 
-    def statistics_update(self): # Обновление торговой статистики в Telegram
+    def statistics_update(self):
+        """Обновление торговой статистики в Telegram"""
         if self.try_send <= 3 and bot.tg_notification == True:
             try:
                 _oa = _fb = ''
@@ -1843,7 +1894,8 @@ class Telegram(): # Telegram
         else:
             self.try_send = 0
 
-    def daily_profit(self, daily_profit): # Дневная статистика
+    def daily_profit(self, daily_profit):
+        """Дневная статистика c отправкой в Telegram"""
         if self.try_send <= 3:
             try:
                 main.exchange = main.client.get_exchange_info()
@@ -1912,7 +1964,8 @@ class Telegram(): # Telegram
         else:
             self.try_send = 0
 
-    def sell(self, symbol, profit): # Отправляем сообщение о продаже
+    def sell(self, symbol, profit):
+        """Отправляем сообщение о продаже"""
         if self.try_send <= 3:
             try:
                 _trailing_list = db.read('trailing_orders', condition = "WHERE pair = '{}'".format(symbol['pair']))
@@ -1936,13 +1989,13 @@ class Telegram(): # Telegram
                     _percent = mathematical.number_round('{:.2f}'.format((float(_avg) / float(symbol['averagePrice']) - 1) * 100))
                     _profit = mathematical.number_round('{:.8f}'.format((float(_avg) * float(_q)) - (float(symbol['averagePrice']) * float(_q))))
                     _text = ('<code>📝 {}/{}\n📉 Средняя цена покупки: {}\n{}\n💵 Общий объём: {}\n💎 Прибыль: {}% ({} {})</code>').format(
-                        symbol['baseAsset'], 
-                        symbol['quoteAsset'], 
-                        mathematical.number_round(symbol['averagePrice']), 
-                        _orders_dict, 
+                        symbol['baseAsset'],
+                        symbol['quoteAsset'],
+                        mathematical.number_round(symbol['averagePrice']),
+                        _orders_dict,
                         _all_quantity,
-                        _percent, 
-                        _profit, 
+                        _percent,
+                        _profit,
                         symbol['quoteAsset'])
                 if bot.tg_notification == True:
                     logging.info('chat_id: {}\ntext: {}\n'.format(bot.tg_name, _text))
@@ -1971,8 +2024,8 @@ class Telegram(): # Telegram
             else:
                 self.try_send = 0
 
-class Stream(): # Класс стримов
-
+class Stream():
+    """Класс стримов  веб-сокеты"""
     def __init__(self):
         self.timer_new_day = bot.new_day() # Сколько секунд осталось до конца дня
         self.telegram_statistics_timer = 86400 # Таймер стрима
@@ -1982,7 +2035,8 @@ class Stream(): # Класс стримов
         self.spinner_delta = 0
         self.event = False
 
-    def search_pair(self, msg_sp): # Ивентовый стрим
+    def search_pair(self, msg_sp):
+        """Ивентовый стрим реагируем на события"""
         bot.ticks = 0
         now_time = time.time()
         timer_daily_profit = bot.new_day()
@@ -1996,14 +2050,14 @@ class Stream(): # Класс стримов
                 bot.binance_socket_manager.close()
                 del bot.binance_socket_manager, bot.conn_start_user_socket, bot.conn_search_pair
                 bot.connect()
-        
+
         if timer_daily_profit > self.timer_new_day or bot.day_profit > 0: # Пуш суточной статистики в Telegram
             bot.today = datetime.date.today()
             daily_profit = db.read('daily_profit', condition = "WHERE day NOT LIKE '{}'".format(bot.today), keys = ['id', 'day', 'quote', 'profit'])
             if len(daily_profit) > 0:
                 telegram.daily_profit(daily_profit)
             self.timer_new_day = bot.new_day()
-        
+
         if now_time - bot.stream_timer >= 0 and bnb_buy == True: # Поиск подходящих по словиям пар для торговли
             bot.stream_timer = now_time
             for quote in bot.quote_asset_list:
@@ -2240,7 +2294,8 @@ class Stream(): # Класс стримов
         bot.stream_timer = time.time()
         stream.event = False
 
-    def start_user_socket(self, msg_sus): # Стрим аккаунта
+    def start_user_socket(self, msg_sus):
+        """Стрим аккаунта"""
 
         if msg_sus['e'] == 'outboundAccountPosition':
             for quote in bot.quote_balances:
@@ -2290,9 +2345,11 @@ class Stream(): # Класс стримов
                 elif X == 'FILLED': # Новый ордер
                     order.filled(s, S, p, q, L, l, z, Z, Y, i, o)
 
-class Orders(): # Работа с ордерами
+class Orders():
+    """Работа с ордерами"""
 
-    def trailing(self, s, q, L, Y, Z): # Частичная продажа по рынку при трейлинге
+    def trailing(self, s, q, L, Y, Z):
+        """Частичная продажа по рынку при трейлинге"""
         for pair_db in db.read('symbols', "WHERE pair = '{}'".format(s)):
             if pair_db['statusOrder'] == 'TRAILING_STOP_ORDER':
                 profit = mathematical.number_round('{:.8f}'.format(float(Y) - float(pair_db['totalQuote'])))
@@ -2313,7 +2370,8 @@ class Orders(): # Работа с ордерами
                     colored(mathematical.number_round(L) + ' ' + pair_db['quoteAsset'] + '\033[K', 'yellow'))
                 break
 
-    def new(self, s, S, p, L, q, i, X, o, C = 'xbot_'): # Новый ордер
+    def new(self, s, S, p, L, q, i, X, o, C = 'xbot_'):
+        """Новый ордер"""
         for pair_db in db.read('symbols', "WHERE pair = '{}'".format(s)):
             _side = 'BUY ' if S == 'BUY' else 'SELL'
             _color = 'green' if S == 'BUY' else 'red'
@@ -2372,7 +2430,8 @@ class Orders(): # Работа с ордерами
 
             break
 
-    def partially_filled (self, s, S, q, l, z, Y, i, o): # Частично исполненный ордер
+    def partially_filled (self, s, S, q, l, z, Y, i, o):
+        """Частично исполненный ордер"""
         for pair_db in db.read('symbols', "WHERE pair = '{}'".format(s)):
             if int(pair_db['orderId']) == int(i) or (o == 'LIMIT' and pair_db['statusOrder'] == 'SELL_ORDER' and S == 'BUY'):
                 _step_size = mathematical.get_count(pair_db['stepSize'])
@@ -2391,7 +2450,8 @@ class Orders(): # Работа с ордерами
                         totalQuote = '{:.8f}'.format(float(pair_db['totalQuote']) - float(Y)))
                 break
 
-    def filled(self, s, S, p, q, L, l, z, Z, Y, i, o): # Исполненный ордер
+    def filled(self, s, S, p, q, L, l, z, Z, Y, i, o):
+        """Исполненный ордер"""
         for pair_db in db.read('symbols', "WHERE pair = '{}'".format(s)):
             if int(pair_db['orderId']) == int(i) or (o == 'MARKET' and pair_db['statusOrder'] == 'TRAILING_STOP_ORDER') or (o == 'LIMIT' and pair_db['statusOrder'] == 'SELL_ORDER' and S == 'BUY'):
                 _side = 'BUY ' if S == 'BUY' else 'SELL'
@@ -2489,7 +2549,8 @@ class Orders(): # Работа с ордерами
                         sell_open_orders = int(db.read('trade_info', keys = ['sell_open_orders'])[0]['sell_open_orders']) - 1) if pair_db['statusOrder'] != 'CANCELED_BUY_ORDER' else None
                 break
 
-    def cancel(self, s, S, p, L, q, z, i, X, c, C, o): # Отменённый ордер
+    def cancel(self, s, S, p, L, q, z, i, X, c, C, o):
+        """Отменённый ордер"""
         for pair_db in db.read('symbols', "WHERE pair = '{}'".format(s)):
             if int(pair_db['orderId']) == int(i):
                 _side = 'BUY ' if S == 'BUY' else 'SELL'
@@ -2506,7 +2567,7 @@ class Orders(): # Работа с ордерами
                     else:
                         bot.write_no_order(s)
                         bot.bot_orders_base_asset_list.remove(pair_db['baseAsset']) if pair_db['baseAsset'] in bot.bot_orders_base_asset_list else None
-                    
+
                 elif pair_db['statusOrder'] == 'SELL_ORDER' and 'xbot_' not in c:
                     db.write('updates', 'symbols', 'pair', s,
                         allQuantity = 0,
@@ -2532,7 +2593,9 @@ class Orders(): # Работа с ордерами
                         lockQuantity = 0,
                         statusOrder = 'USER_AVERAGING_ORDER')
 
-if __name__ == '__main__': # Главный блок
+if __name__ == '__main__':
+    """Главный блок"""
+
     if os.path.exists("xbot_log.log"):
         if os.path.getsize("xbot_log.log") > 1000000:
             os.remove("xbot_log.log")
