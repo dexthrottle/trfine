@@ -19,8 +19,8 @@ func firstStart(reader *bufio.Reader) (bool, string) {
 		var useLogs bool
 		fmt.Print("Включить логгирование? (Y/n): ")
 		useLogsText, _ := reader.ReadString('\n')
-		if strings.TrimSuffix(useLogsText, "\n") == "Y" ||
-			strings.TrimSuffix(useLogsText, "\n") == "y" {
+		if strings.TrimSuffix(useLogsText, "\r\n") == "Y" ||
+			strings.TrimSuffix(useLogsText, "\r\n") == "y" {
 			useLogs = true
 		} else {
 			useLogs = false
@@ -40,8 +40,9 @@ func secondStart(reader *bufio.Reader) dto.AppConfigDTO {
 		fmt.Print("Введите ByBit UID: ")
 		byBitUIDStr, _ := reader.ReadString('\n')
 		var err error
-		byBitUID, err = strconv.Atoi(strings.TrimSuffix(byBitUIDStr, "\n"))
+		byBitUID, err = strconv.Atoi(strings.TrimSuffix(byBitUIDStr, "\r\n"))
 		if err != nil {
+			fmt.Println(err)
 			fmt.Println("Введите корректный ByBit UID!")
 			continue
 		}
@@ -57,7 +58,7 @@ func secondStart(reader *bufio.Reader) dto.AppConfigDTO {
 		fmt.Print("Введите Ваш телегам-ID: ")
 		tgUserIDStr, _ := reader.ReadString('\n')
 		var err error
-		tgUserID, err = strconv.Atoi(strings.TrimSuffix(tgUserIDStr, "\n"))
+		tgUserID, err = strconv.Atoi(strings.TrimSuffix(tgUserIDStr, "\r\n"))
 		if err != nil {
 			fmt.Println("Введите корректный телегам-ID!")
 			continue
@@ -68,12 +69,12 @@ func secondStart(reader *bufio.Reader) dto.AppConfigDTO {
 	tgNotificationChannel := fmt.Sprintln("Введите название телеграм-канала: ")
 
 	appCfgDto := dto.AppConfigDTO{
-		TgApiToken:            strings.TrimSuffix(tgApiToken, "\n"),
+		TgApiToken:            strings.TrimSuffix(tgApiToken, "\r\n"),
 		ByBitUID:              byBitUID,
-		ByBitApiKey:           strings.TrimSuffix(byBitApiKey, "\n"),
-		ByBitApiSecret:        strings.TrimSuffix(byBitApiSecret, "\n"),
+		ByBitApiKey:           strings.TrimSuffix(byBitApiKey, "\r\n"),
+		ByBitApiSecret:        strings.TrimSuffix(byBitApiSecret, "\r\n"),
 		TGUserID:              tgUserID,
-		TGNotificationChannel: strings.TrimSuffix(tgNotificationChannel, "\n"),
+		TGNotificationChannel: strings.TrimSuffix(tgNotificationChannel, "\r\n"),
 	}
 	return appCfgDto
 }
