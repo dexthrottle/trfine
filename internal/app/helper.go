@@ -1,9 +1,11 @@
 package app
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/dexthrottle/trfine/internal/dto"
 )
@@ -12,50 +14,66 @@ const (
 	welcomeMessage = "Привет @username! Выполните настройку перед первым запуском:"
 )
 
-func firstStart() bool {
+func firstStart(reader *bufio.Reader) (bool, string) {
 	if _, err := os.Stat("trbotdatabase.db"); os.IsNotExist(err) {
-		tgApiToken := fmt.Sprintln("Введите токен телеграм-бота: ")
-
-		var byBitUID int
-		for {
-			byBitUID, err = strconv.Atoi(fmt.Sprintln("Введите ByBit UID: "))
-			if err != nil {
-				fmt.Println("Введите корректный ByBit UID!")
-				continue
-			}
-			break
-		}
-
-		byBitApiKey := fmt.Sprintln("Введите ByBit ApiKey: ")
-		byBitApiSecret := fmt.Sprintln("Введите ByBit ApiSecret: ")
-
-		var tgUserID int
-		for {
-			tgUserID, err = strconv.Atoi(fmt.Sprintln("Введите Ваш телегам-ID: "))
-			if err != nil {
-				fmt.Println("Введите корректный телегам-ID!")
-				continue
-			}
-			break
-		}
-
-		useLogs := false
-		useLogsText := fmt.Sprintln("Включить логгирование? (Y/n): ")
-		if useLogsText == "Y" || useLogsText == "y" {
+		var useLogs bool
+		fmt.Print("Включить логгирование? (Y/n): ")
+		useLogsText, _ := reader.ReadString('\n')
+		if strings.TrimSuffix(useLogsText, "\n") == "Y" ||
+			strings.TrimSuffix(useLogsText, "\n") == "y" {
 			useLogs = true
+		} else {
+			useLogs = false
 		}
-		tgNotificationChannel := fmt.Sprintln("Введите название телеграм-канала: ")
-
-		appCfgDto := dto.AppConfigDTO{
-			TgApiToken:            tgApiToken,
-			ByBitUID:              byBitUID,
-			ByBitApiKey:           byBitApiKey,
-			ByBitApiSecret:        byBitApiSecret,
-			TGUserID:              tgUserID,
-			UseLogs:               useLogs,
-			TGNotificationChannel: tgNotificationChannel,
-		}
-		fmt.Println(appCfgDto)
+		fmt.Print("Введите порт для запуска приложения: ")
+		portApp, _ := reader.ReadString('\n')
+		return useLogs, portApp
 	}
-	return true
+	return false, "8000"
+}
+
+func secondStart(reader *bufio.Reader) dto.AppConfigDTO {
+	fmt.Print("Введите токен телеграм-бота: ")
+	tgApiToken, _ := reader.ReadString('\n')
+	var byBitUID int
+	for {
+		fmt.Print("Введите ByBit UID: ")
+		byBitUIDStr, _ := reader.ReadString('\n')
+		var err error
+		byBitUID, err = strconv.Atoi(strings.TrimSuffix(byBitUIDStr, "\n"))
+		if err != nil {
+			fmt.Println("Введите корректный ByBit UID!")
+			continue
+		}
+		break
+	}
+	fmt.Print("Введите ByBit ApiKey: ")
+	byBitApiKey, _ := reader.ReadString('\n')
+	fmt.Print("Введите ByBit ApiSecret: ")
+	byBitApiSecret, _ := reader.ReadString('\n')
+
+	var tgUserID int
+	for {
+		fmt.Print("Введите Ваш телегам-ID: ")
+		tgUserIDStr, _ := reader.ReadString('\n')
+		var err error
+		tgUserID, err = strconv.Atoi(strings.TrimSuffix(tgUserIDStr, "\n"))
+		if err != nil {
+			fmt.Println("Введите корректный телегам-ID!")
+			continue
+		}
+		break
+	}
+
+	tgNotificationChannel := fmt.Sprintln("Введите название телеграм-канала: ")
+
+	appCfgDto := dto.AppConfigDTO{
+		TgApiToken:            strings.TrimSuffix(tgApiToken, "\n"),
+		ByBitUID:              byBitUID,
+		ByBitApiKey:           strings.TrimSuffix(byBitApiKey, "\n"),
+		ByBitApiSecret:        strings.TrimSuffix(byBitApiSecret, "\n"),
+		TGUserID:              tgUserID,
+		TGNotificationChannel: strings.TrimSuffix(tgNotificationChannel, "\n"),
+	}
+	return appCfgDto
 }

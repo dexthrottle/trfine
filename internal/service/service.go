@@ -16,12 +16,19 @@ type User interface {
 	FindUserByTgUserId(ctx context.Context, userTgId int) (*model.User, error)
 }
 
+type AppConfig interface {
+	InsertAppConfig(ctx context.Context, appCfg dto.AppConfigDTO) (*model.AppConfig, error)
+	CheckConfigData(ctx context.Context) (*model.AppConfig, error)
+}
+
 type Service struct {
 	User
+	AppConfig
 }
 
 func NewService(ctx context.Context, r repository.Repository, log logging.Logger) *Service {
 	return &Service{
-		User: NewUserService(ctx, r.User, log),
+		User:      NewUserService(ctx, r.User, log),
+		AppConfig: NewAppCfgService(ctx, r.AppConfig),
 	}
 }
