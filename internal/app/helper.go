@@ -14,9 +14,25 @@ const (
 	welcomeMessage = "Привет @username! Выполните настройку перед первым запуском:"
 )
 
-func firstStart() {
-	// if _, err := os.Stat("trbotdatabase.db"); os.IsNotExist(err) {
-	reader := bufio.NewReader(os.Stdin)
+func firstStart(reader *bufio.Reader) (bool, string) {
+	if _, err := os.Stat("trbotdatabase.db"); os.IsNotExist(err) {
+		var useLogs bool
+		fmt.Print("Включить логгирование? (Y/n): ")
+		useLogsText, _ := reader.ReadString('\n')
+		if strings.TrimSuffix(useLogsText, "\n") == "Y" ||
+			strings.TrimSuffix(useLogsText, "\n") == "y" {
+			useLogs = true
+		} else {
+			useLogs = false
+		}
+		fmt.Print("Введите порт для запуска приложения: ")
+		portApp, _ := reader.ReadString('\n')
+		return useLogs, portApp
+	}
+	return false, "8000"
+}
+
+func secondStart(reader *bufio.Reader) dto.AppConfigDTO {
 	fmt.Print("Введите токен телеграм-бота: ")
 	tgApiToken, _ := reader.ReadString('\n')
 	var byBitUID int
@@ -31,7 +47,6 @@ func firstStart() {
 		}
 		break
 	}
-
 	fmt.Print("Введите ByBit ApiKey: ")
 	byBitApiKey, _ := reader.ReadString('\n')
 	fmt.Print("Введите ByBit ApiSecret: ")
@@ -60,6 +75,5 @@ func firstStart() {
 		TGUserID:              tgUserID,
 		TGNotificationChannel: strings.TrimSuffix(tgNotificationChannel, "\n"),
 	}
-	fmt.Println(appCfgDto)
-	// }
+	return appCfgDto
 }

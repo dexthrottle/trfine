@@ -11,6 +11,7 @@ import (
 
 type AppConfigService interface {
 	InsertAppConfig(ctx context.Context, appCfg dto.AppConfigDTO) (*model.AppConfig, error)
+	CheckConfigData(ctx context.Context) (*model.AppConfig, error)
 }
 
 type appCfgService struct {
@@ -18,7 +19,7 @@ type appCfgService struct {
 	appCfgRepository repository.AppConfigRepository
 }
 
-func NewAppCfgRepository(
+func NewAppCfgService(
 	ctx context.Context,
 	appCfgRepository repository.AppConfigRepository,
 ) AppConfigService {
@@ -40,4 +41,12 @@ func (s *appCfgService) InsertAppConfig(ctx context.Context, appCfgDTO dto.AppCo
 		return nil, err
 	}
 	return updatedAppCfg, nil
+}
+
+func (s *appCfgService) CheckConfigData(ctx context.Context) (*model.AppConfig, error) {
+	mAppCfg, err := s.appCfgRepository.CheckConfigData(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return mAppCfg, nil
 }
