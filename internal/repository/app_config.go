@@ -38,8 +38,7 @@ func (db *appCfgConnection) InsertAppConfig(ctx context.Context, appCfg model.Ap
 func (db *appCfgConnection) CheckConfigData(ctx context.Context) (*model.AppConfig, error) {
 	tx := db.connection.WithContext(ctx)
 	var appCfg model.AppConfig
-
-	res := tx.Find(appCfg)
+	res := tx.Find(&appCfg)
 	if res.Error != nil {
 		return nil, res.Error
 	}

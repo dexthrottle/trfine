@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -28,7 +29,6 @@ func Run() {
 	// Проверяем есть файл с базой данных,
 	// если нет - запрашиваем порт и логи, если есть идем дальше
 	useLogs, portApp := firstStart(reader)
-
 	// logger init
 	logging.Init(useLogs)
 	log := logging.GetLogger()
@@ -62,6 +62,9 @@ func Run() {
 	// Проверяем, есть ли конфигурация приложения, если есть запускаемся
 	// если нет - запрашиваем данные у пользователя
 	cfgAppCheck, err := services.CheckConfigData(ctx)
+	if err != nil {
+		panic("Ошибка при получение конфигурации\n" + err.Error())
+	}
 	if cfgAppCheck.ID == 0 {
 		appCfgDto := secondStart(reader)
 		mAppConfig, err := services.AppConfig.InsertAppConfig(ctx, appCfgDto)
@@ -69,9 +72,6 @@ func Run() {
 			panic("Не удалось сохранить конфигурацию" + err.Error() + "\n")
 		}
 		log.Infof("%+v\n", mAppConfig)
-	}
-	if err != nil {
-		panic("Ошибка при получение конфигурации\n")
 	}
 
 	// server start
@@ -82,6 +82,9 @@ func Run() {
 		}
 	}()
 	log.Info("Server started on http://127.0.0.1:" + cfg.App.Port + " Gin MODE = " + gin.Mode())
+	if !useLogs {
+		fmt.Println("Приложение запущено на http://127.0.0.1:" + cfg.App.Port)
+	}
 
 	// Graceful Shutdown ---------------------------
 	quit := make(chan os.Signal, 1)
