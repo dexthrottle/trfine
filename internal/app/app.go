@@ -34,7 +34,7 @@ func Run() {
 	log := logging.GetLogger()
 
 	// config init
-	cfg := config.GetConfig(useLogs, strings.TrimSuffix(portApp, "\n"))
+	cfg := config.GetConfig(useLogs, strings.TrimSuffix(portApp, "\r\n"))
 	log.Info("config init")
 
 	// database init
