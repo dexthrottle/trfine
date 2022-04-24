@@ -42,7 +42,6 @@ func secondStart(reader *bufio.Reader) dto.AppConfigDTO {
 		var err error
 		byBitUID, err = strconv.Atoi(strings.TrimSuffix(byBitUIDStr, "\r\n"))
 		if err != nil {
-			fmt.Println(err)
 			fmt.Println("Введите корректный ByBit UID!")
 			continue
 		}
