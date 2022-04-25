@@ -4,15 +4,14 @@ import (
 	"bufio"
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
 	"github.com/dexthrottle/trfine/internal/config"
+	"github.com/dexthrottle/trfine/internal/dto"
 	"github.com/dexthrottle/trfine/internal/handler"
 	"github.com/dexthrottle/trfine/internal/repository"
 	"github.com/dexthrottle/trfine/internal/service"
@@ -23,18 +22,20 @@ import (
 
 func Run() {
 	ctx := context.Background()
-
-	// Создаем объект читателя
 	reader := bufio.NewReader(os.Stdin)
-	// Проверяем есть файл с базой данных,
-	// если нет - запрашиваем порт и логи, если есть идем дальше
-	useLogs, portApp := firstStart(reader)
+
+	var appCfgDto dto.AppConfigDTO
+	var appPort string
+	if _, err := os.Stat("trbotdatabase.db"); os.IsNotExist(err) {
+		appCfgDto, appPort = firstRunApp(reader)
+	}
+
 	// logger init
-	logging.Init(useLogs)
+	logging.Init()
 	log := logging.GetLogger()
 
 	// config init
-	cfg := config.GetConfig(useLogs, strings.TrimSuffix(portApp, "\n"))
+	cfg := config.GetConfig("debug", appPort)
 	log.Info("config init")
 
 	// database init
@@ -59,19 +60,9 @@ func Run() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	// Проверяем, есть ли конфигурация приложения, если есть запускаемся
-	// если нет - запрашиваем данные у пользователя
-	cfgAppCheck, err := services.CheckConfigData(ctx)
+	_, err = services.AppConfig.InsertAppConfig(ctx, appCfgDto)
 	if err != nil {
-		panic("Ошибка при получение конфигурации\n" + err.Error())
-	}
-	if cfgAppCheck.ID == 0 {
-		appCfgDto := secondStart(reader)
-		mAppConfig, err := services.AppConfig.InsertAppConfig(ctx, appCfgDto)
-		if err != nil {
-			panic("Не удалось сохранить конфигурацию" + err.Error() + "\n")
-		}
-		log.Infof("%+v\n", mAppConfig)
+		panic("Ошибка с сохранением конфигурации: " + err.Error())
 	}
 
 	// server start
@@ -82,9 +73,6 @@ func Run() {
 		}
 	}()
 	log.Info("Server started on http://127.0.0.1:" + cfg.App.Port + " Gin MODE = " + gin.Mode())
-	if !useLogs {
-		fmt.Println("Приложение запущено на http://127.0.0.1:" + cfg.App.Port)
-	}
 
 	// Graceful Shutdown ---------------------------
 	quit := make(chan os.Signal, 1)
