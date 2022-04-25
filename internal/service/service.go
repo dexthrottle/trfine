@@ -18,7 +18,7 @@ type User interface {
 
 type AppConfig interface {
 	InsertAppConfig(ctx context.Context, appCfg dto.AppConfigDTO) (*model.AppConfig, error)
-	CheckConfigData(ctx context.Context) (*model.AppConfig, error)
+	GetConfigData(ctx context.Context) (*model.AppConfig, error)
 }
 
 type Service struct {

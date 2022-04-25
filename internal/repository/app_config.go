@@ -10,7 +10,7 @@ import (
 
 type AppConfigRepository interface {
 	InsertAppConfig(ctx context.Context, appCfg model.AppConfig) (*model.AppConfig, error)
-	CheckConfigData(ctx context.Context) (*model.AppConfig, error)
+	GetConfigData(ctx context.Context) (*model.AppConfig, error)
 }
 
 type appCfgConnection struct {
@@ -35,7 +35,7 @@ func (db *appCfgConnection) InsertAppConfig(ctx context.Context, appCfg model.Ap
 	return &appCfg, nil
 }
 
-func (db *appCfgConnection) CheckConfigData(ctx context.Context) (*model.AppConfig, error) {
+func (db *appCfgConnection) GetConfigData(ctx context.Context) (*model.AppConfig, error) {
 	tx := db.connection.WithContext(ctx)
 	var appCfg model.AppConfig
 	res := tx.Find(&appCfg)

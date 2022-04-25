@@ -10,7 +10,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/dexthrottle/trfine/internal/config"
 	"github.com/dexthrottle/trfine/internal/dto"
 	"github.com/dexthrottle/trfine/internal/handler"
 	"github.com/dexthrottle/trfine/internal/repository"
@@ -20,26 +19,21 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Run() {
+func Run(appPort, ginMode string) {
 	ctx := context.Background()
 	reader := bufio.NewReader(os.Stdin)
 
 	var appCfgDto dto.AppConfigDTO
-	var appPort string
-	if _, err := os.Stat("trbotdatabase.db"); os.IsNotExist(err) {
-		appCfgDto, appPort = firstRunApp(reader)
+	if _, err := os.Stat("rp.db"); os.IsNotExist(err) {
+		appCfgDto = firstRunApp(reader)
 	}
 
 	// logger init
 	logging.Init()
 	log := logging.GetLogger()
 
-	// config init
-	cfg := config.GetConfig("debug", appPort)
-	log.Info("config init")
-
 	// database init
-	db, err := repository.NewPostgresDB(cfg, &log)
+	db, err := repository.NewPostgresDB(&log)
 	if err != nil {
 		panic("database connect error" + err.Error())
 	}
@@ -56,9 +50,8 @@ func Run() {
 	// handlers init
 	handlers := handler.NewHandler(services, log)
 	log.Info("Connect handlers successfully!")
-	if cfg.App.GinMode == "release" {
-		gin.SetMode(gin.ReleaseMode)
-	}
+
+	gin.SetMode(ginMode)
 
 	_, err = services.AppConfig.InsertAppConfig(ctx, appCfgDto)
 	if err != nil {
@@ -66,13 +59,13 @@ func Run() {
 	}
 
 	// server start
-	srv := server.NewServer(cfg.App.Port, handlers.InitRoutes())
+	srv := server.NewServer(appPort, handlers.InitRoutes())
 	go func() {
 		if err := srv.Run(); !errors.Is(err, http.ErrServerClosed) {
 			panic("error occurred while running http server: " + err.Error() + "\n")
 		}
 	}()
-	log.Info("Server started on http://127.0.0.1:" + cfg.App.Port + " Gin MODE = " + gin.Mode())
+	log.Info("Server started on http://127.0.0.1:" + appPort + " Gin MODE = " + gin.Mode())
 
 	// Graceful Shutdown ---------------------------
 	quit := make(chan os.Signal, 1)

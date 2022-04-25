@@ -13,11 +13,8 @@ const (
 	welcomeMessage = "Привет @username! Выполните настройку перед первым запуском:"
 )
 
-func firstRunApp(reader *bufio.Reader) (dto.AppConfigDTO, string) {
-
-	fmt.Print("Введите порт для запуска приложения: ")
-	appPort, _ := reader.ReadString('\n')
-	appPort = strings.TrimSuffix(strings.TrimSuffix(appPort, "\n"), "\r")
+func firstRunApp(reader *bufio.Reader) dto.AppConfigDTO {
+	fmt.Println(welcomeMessage)
 	fmt.Print("Введите токен телеграм-бота: ")
 	tgApiToken, _ := reader.ReadString('\n')
 	var byBitUID int
@@ -60,5 +57,5 @@ func firstRunApp(reader *bufio.Reader) (dto.AppConfigDTO, string) {
 		TGUserID:              tgUserID,
 		TGNotificationChannel: strings.TrimSuffix(strings.TrimSuffix(tgNotificationChannel, "\n"), "\r"),
 	}
-	return appCfgDto, appPort
+	return appCfgDto
 }
