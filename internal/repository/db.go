@@ -24,7 +24,7 @@ func NewPostgresDB(log *logging.Logger) (*gorm.DB, error) {
 }
 
 func migrations(db *gorm.DB, log *logging.Logger) error {
-	err := db.AutoMigrate(&model.User{}, &model.AppConfig{})
+	err := db.AutoMigrate(&model.User{}, &model.AppConfig{}, &model.Symbols{})
 	if err != nil {
 		log.Errorf("Migrate error: %v", err)
 		return err
