@@ -44,7 +44,7 @@ func GetLogger() Logger {
 	return Logger{e}
 }
 
-func Init(useLogs bool) {
+func Init() {
 	l := logrus.New()
 	l.SetReportCaller(true)
 	l.Formatter = &logrus.TextFormatter{
@@ -56,28 +56,25 @@ func Init(useLogs bool) {
 		DisableColors: false,
 		FullTimestamp: true,
 	}
-	if useLogs {
-		err := os.MkdirAll("logs", 0777)
 
-		if err != nil || os.IsExist(err) {
-			panic("can't create log dir. no configured logging to files | " + err.Error())
-		} else {
-			allFile, err := os.OpenFile("logs/all.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0660)
-			if err != nil {
-				panic(fmt.Sprintf("[Message]: %s", err))
-			}
+	err := os.MkdirAll("logs", 0777)
 
-			l.SetOutput(ioutil.Discard)
-
-			l.AddHook(&writerHook{
-				Writer:    []io.Writer{allFile, os.Stdout},
-				LogLevels: logrus.AllLevels,
-			})
-		}
-		l.SetLevel(logrus.TraceLevel)
+	if err != nil || os.IsExist(err) {
+		panic("can't create log dir. no configured logging to files | " + err.Error())
 	} else {
-		l.SetLevel(logrus.PanicLevel)
+		allFile, err := os.OpenFile("logs/all.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0660)
+		if err != nil {
+			panic(fmt.Sprintf("[Message]: %s", err))
+		}
+
+		l.SetOutput(ioutil.Discard)
+
+		l.AddHook(&writerHook{
+			Writer:    []io.Writer{allFile, os.Stdout},
+			LogLevels: logrus.AllLevels,
+		})
 	}
+	l.SetLevel(logrus.TraceLevel)
 
 	e = logrus.NewEntry(l)
 }
