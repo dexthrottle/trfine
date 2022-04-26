@@ -33,7 +33,7 @@ func Run(appPort, ginMode string) {
 	log := logging.GetLogger()
 
 	// database init
-	db, err := repository.NewPostgresDB(&log)
+	db, err := repository.NewDB(&log)
 	if err != nil {
 		panic("database connect error" + err.Error())
 	}
