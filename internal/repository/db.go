@@ -1,14 +1,16 @@
 package repository
 
 import (
+	"fmt"
+
 	"github.com/dexthrottle/trfine/internal/model"
 	"github.com/dexthrottle/trfine/pkg/logging"
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 )
 
-func NewDB(log *logging.Logger) (*gorm.DB, error) {
-	db, err := gorm.Open(sqlite.Open("rp.db"), &gorm.Config{})
+func NewDB(log *logging.Logger, dbName string) (*gorm.DB, error) {
+	db, err := gorm.Open(sqlite.Open(fmt.Sprintf("%s.db", dbName)), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Error connection database: %v", err)
 		return nil, err

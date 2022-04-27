@@ -3,10 +3,9 @@ package main
 import "github.com/dexthrottle/trfine/internal/app"
 
 const (
-	appPort = "8000"
-	ginMode = "debug"
+	dbName = "rp"
 )
 
 func main() {
-	app.Run(appPort, ginMode)
+	app.Run(dbName)
 }

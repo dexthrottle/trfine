@@ -3,23 +3,19 @@ package app
 import (
 	"bufio"
 	"context"
-	"errors"
-	"net/http"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/dexthrottle/trfine/internal/dto"
 	"github.com/dexthrottle/trfine/internal/handler"
 	"github.com/dexthrottle/trfine/internal/repository"
 	"github.com/dexthrottle/trfine/internal/service"
 	"github.com/dexthrottle/trfine/pkg/logging"
-	"github.com/dexthrottle/trfine/pkg/server"
-	"github.com/gin-gonic/gin"
 )
 
-func Run(appPort, ginMode string) {
+func Run(dbName string) {
 	ctx := context.Background()
 	reader := bufio.NewReader(os.Stdin)
 
@@ -27,13 +23,14 @@ func Run(appPort, ginMode string) {
 	if _, err := os.Stat("rp.db"); os.IsNotExist(err) {
 		appCfgDto = firstRunApp(reader)
 	}
+	fmt.Printf("%+v\n", appCfgDto)
 
 	// logger init
 	logging.Init()
 	log := logging.GetLogger()
 
 	// database init
-	db, err := repository.NewDB(&log)
+	db, err := repository.NewDB(&log, dbName)
 	if err != nil {
 		panic("database connect error" + err.Error())
 	}
@@ -49,34 +46,13 @@ func Run(appPort, ginMode string) {
 
 	// handlers init
 	handlers := handler.NewHandler(services, log)
-	log.Info("Connect handlers successfully!")
+	log.Infof("Connect handlers successfully! %+v", handlers)
 
-	gin.SetMode(ginMode)
-
-	_, err = services.AppConfig.InsertAppConfig(ctx, appCfgDto)
-	if err != nil {
-		panic("Ошибка с сохранением конфигурации: " + err.Error())
-	}
-
-	// server start
-	srv := server.NewServer(appPort, handlers.InitRoutes())
-	go func() {
-		if err := srv.Run(); !errors.Is(err, http.ErrServerClosed) {
-			panic("error occurred while running http server: " + err.Error() + "\n")
-		}
-	}()
-	log.Info("Server started on http://127.0.0.1:" + appPort + " Gin MODE = " + gin.Mode())
+	log.Infoln("Start successfully!")
 
 	// Graceful Shutdown ---------------------------
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
 	<-quit
-	log.Info("Server stopped")
-
-	const timeout = 5 * time.Second
-	ctx, shutdown := context.WithTimeout(context.Background(), timeout)
-	defer shutdown()
-	if err := srv.Stop(ctx); err != nil {
-		log.Errorf("failed to stop server: %v", err)
-	}
+	log.Info("Exit..")
 }

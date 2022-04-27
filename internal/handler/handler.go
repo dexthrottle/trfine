@@ -3,7 +3,6 @@ package handler
 import (
 	"github.com/dexthrottle/trfine/internal/service"
 	"github.com/dexthrottle/trfine/pkg/logging"
-	"github.com/gin-gonic/gin"
 )
 
 type Handler struct {
@@ -16,16 +15,4 @@ func NewHandler(service *service.Service, log logging.Logger) *Handler {
 		service: service,
 		log:     log,
 	}
-}
-
-func (h *Handler) InitRoutes() *gin.Engine {
-	r := gin.New()
-
-	userRoutes := r.Group("api/user")
-	{
-		userRoutes.GET("/profile", h.ProfileUser)
-		userRoutes.POST("/create-user", h.CreateUser)
-	}
-
-	return r
 }
