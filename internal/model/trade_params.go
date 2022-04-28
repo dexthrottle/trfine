@@ -1,5 +1,6 @@
 package model
 
+// Торговые параметры для бота (на их основе осуществляется торговля)
 type TradeParams struct {
 	ID              uint64 `gorm:"primary_key:auto_increment" json:"id"`
 	ExternalID      uint64 `gorm:"type:int;default:0" json:"external_id"`

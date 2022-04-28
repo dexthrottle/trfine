@@ -1,5 +1,6 @@
 package model
 
+// Пары с биржи
 type TradePairs struct {
 	ID         uint64 `gorm:"primary_key:auto_increment" json:"id"`
 	Pair       string `gorm:"type:varchar(255)" json:"pair"`

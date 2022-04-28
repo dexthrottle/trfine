@@ -1,5 +1,6 @@
 package model
 
+// Торгуемая пара и параметры к ней
 type Symbols struct {
 	ID                 uint64 `gorm:"primary_key:auto_increment" json:"id"`
 	Pair               string `gorm:"type:varchar(255);unique;not null" json:"pair"`
