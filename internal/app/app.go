@@ -20,10 +20,9 @@ func Run(dbName string) {
 	reader := bufio.NewReader(os.Stdin)
 
 	var appCfgDto dto.AppConfigDTO
-	if _, err := os.Stat("rp.db"); os.IsNotExist(err) {
+	if _, err := os.Stat(fmt.Sprintf("%s.db", dbName)); os.IsNotExist(err) {
 		appCfgDto = firstRunApp(reader)
 	}
-	fmt.Printf("%+v\n", appCfgDto)
 
 	// logger init
 	logging.Init()
@@ -44,8 +43,18 @@ func Run(dbName string) {
 	services := service.NewService(ctx, *repos, log)
 	log.Info("Connect services successfully!")
 
+	_, err = services.AppConfig.InsertAppConfig(ctx, appCfgDto)
+	if err != nil {
+		panic("Не удалось сохранить конфигурацию!")
+	}
+
+	// add first data
+	initDefaultData(ctx, *services)
+
 	// handlers init
 	handlers := handler.NewHandler(services, log)
+
+	// Говнокод
 	log.Infof("Connect handlers successfully! %+v", handlers)
 
 	log.Infoln("Start successfully!")
@@ -55,4 +64,15 @@ func Run(dbName string) {
 	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
 	<-quit
 	log.Info("Exit..")
+}
+
+func initDefaultData(ctx context.Context, services service.Service) {
+	err := services.InitData.InsertDataTradeParams(ctx)
+	if err != nil {
+		panic("Не удалось сохранить дефолтные значения!")
+	}
+	err = services.InitData.InsertDataTradeInfo(ctx)
+	if err != nil {
+		panic("Не удалось сохранить дефолтные значения!")
+	}
 }
