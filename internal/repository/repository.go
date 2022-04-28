@@ -20,14 +20,21 @@ type AppConfig interface {
 	GetConfigData(ctx context.Context) (*model.AppConfig, error)
 }
 
+type InitData interface {
+	InsertDataTradeParams(ctx context.Context, tradeParams model.TradeParams) (*model.TradeParams, error)
+	InsertDataTradeInfo(ctx context.Context, tradeInfo model.TradeInfo) (*model.TradeInfo, error)
+}
+
 type Repository struct {
 	User
 	AppConfig
+	InitData
 }
 
 func NewRepository(ctx context.Context, db *gorm.DB, log logging.Logger) *Repository {
 	return &Repository{
 		User:      NewUserRepository(ctx, db, log),
 		AppConfig: NewAppCfgRepository(ctx, db),
+		InitData:  NewInitDataRepository(ctx, db, log),
 	}
 }

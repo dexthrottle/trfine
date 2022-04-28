@@ -26,11 +26,10 @@ func NewDB(log *logging.Logger, dbName string) (*gorm.DB, error) {
 		model.TradeInfo{},
 		model.TradePairs{},
 		model.TradeParams{},
-		model.TradeParamsList{},
 		model.TrailingOrders{},
 		model.User{},
 		model.WhiteList{},
-		// model.BNBBurn{}, TODO: Шляпа
+		model.CommissionBurn{},
 	)
 	if err != nil {
 		return nil, err

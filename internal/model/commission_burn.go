@@ -1,7 +1,7 @@
 package model
 
 // TODO: Какая-то дичь
-type BNBBurn struct {
+type CommissionBurn struct {
 	ID     uint64 `gorm:"primary_key:auto_increment" json:"id"`
 	Day    string `gorm:"type:varchar(255)" json:"day"`
 	Quote  string `gorm:"type:varchar(255)" json:"quote"`

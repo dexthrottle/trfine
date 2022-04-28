@@ -21,14 +21,21 @@ type AppConfig interface {
 	GetConfigData(ctx context.Context) (*model.AppConfig, error)
 }
 
+type InitData interface {
+	InsertDataTradeParams(ctx context.Context) error
+	InsertDataTradeInfo(ctx context.Context) error
+}
+
 type Service struct {
 	User
 	AppConfig
+	InitData
 }
 
 func NewService(ctx context.Context, r repository.Repository, log logging.Logger) *Service {
 	return &Service{
 		User:      NewUserService(ctx, r.User, log),
 		AppConfig: NewAppCfgService(ctx, r.AppConfig),
+		InitData:  NewInitDataService(ctx, r.InitData),
 	}
 }
