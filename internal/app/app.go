@@ -48,13 +48,13 @@ func Run(dbName string) {
 		panic("Не удалось сохранить конфигурацию!")
 	}
 
-	// add first data
+	// Add first data
 	initDefaultData(ctx, *services)
 
 	// handlers init
 	handlers := handler.NewHandler(services, log)
 
-	// Говнокод
+	// TODO: Говнокод
 	log.Infof("Connect handlers successfully! %+v", handlers)
 
 	log.Infoln("Start successfully!")

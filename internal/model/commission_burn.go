@@ -1,6 +1,6 @@
 package model
 
-// TODO: Какая-то дичь
+// Коммисия за сделки
 type CommissionBurn struct {
 	ID     uint64 `gorm:"primary_key:auto_increment" json:"id"`
 	Day    string `gorm:"type:varchar(255)" json:"day"`
