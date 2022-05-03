@@ -71,7 +71,13 @@ func initDefaultData(ctx context.Context, services service.Service) {
 	if err != nil {
 		panic("Не удалось сохранить дефолтные значения!")
 	}
+
 	err = services.InitData.InsertDataTradeInfo(ctx)
+	if err != nil {
+		panic("Не удалось сохранить дефолтные значения!")
+	}
+
+	err = services.InsertWhiteList(ctx)
 	if err != nil {
 		panic("Не удалось сохранить дефолтные значения!")
 	}

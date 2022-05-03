@@ -72,6 +72,78 @@ func GetTradeParams() TradeParams {
 	}
 }
 
+type WhiteList struct {
+	Pair string
+}
+
+func GetWhiteList() []WhiteList {
+	return []WhiteList{
+		{Pair: "ADA"},
+		{Pair: "ADX"},
+		{Pair: "AGI"},
+		{Pair: "AION"},
+		{Pair: "ALGO"},
+		{Pair: "ARDR"},
+		{Pair: "ARPA"},
+		{Pair: "ATOM"},
+		{Pair: "BCH"},
+		{Pair: "BLZ"},
+		{Pair: "BNT"},
+		{Pair: "COTI"},
+		{Pair: "CVC"},
+		{Pair: "DASH"},
+		{Pair: "DATA"},
+		{Pair: "DCR"},
+		{Pair: "ELF"},
+		{Pair: "ENJ"},
+		{Pair: "EOS"},
+		{Pair: "ETH"},
+		{Pair: "GXS"},
+		{Pair: "ICX"},
+		{Pair: "IOTA"},
+		{Pair: "IRIS"},
+		{Pair: "KMD"},
+		{Pair: "LINK"},
+		{Pair: "LOOM"},
+		{Pair: "LSK"},
+		{Pair: "LTC"},
+		{Pair: "LTO"},
+		{Pair: "MANA"},
+		{Pair: "NANO"},
+		{Pair: "NEO"},
+		{Pair: "NULS"},
+		{Pair: "OAX"},
+		{Pair: "OGN"},
+		{Pair: "OMG"},
+		{Pair: "ONT"},
+		{Pair: "PERL"},
+		{Pair: "POA"},
+		{Pair: "POLY"},
+		{Pair: "QLC"},
+		{Pair: "QSP"},
+		{Pair: "QTUM"},
+		{Pair: "REN"},
+		{Pair: "REP"},
+		{Pair: "RLC"},
+		{Pair: "RVN"},
+		{Pair: "SNT"},
+		{Pair: "STEEM"},
+		{Pair: "STORJ"},
+		{Pair: "SXP"},
+		{Pair: "THETA"},
+		{Pair: "WAN"},
+		{Pair: "WAVES"},
+		{Pair: "WRX"},
+		{Pair: "XEM"},
+		{Pair: "XLM"},
+		{Pair: "XMR"},
+		{Pair: "XTZ"},
+		{Pair: "ZEN"},
+		{Pair: "ZIL"},
+		{Pair: "ZRX"},
+	}
+}
+
 // TODO: возможно не понадобится
 type SystemKeys struct {
 	Keys []string `json:"keys"`

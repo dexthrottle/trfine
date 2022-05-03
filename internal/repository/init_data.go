@@ -12,6 +12,7 @@ import (
 type InitDataRepository interface {
 	InsertDataTradeParams(ctx context.Context, tradeParams model.TradeParams) (*model.TradeParams, error)
 	InsertDataTradeInfo(ctx context.Context, tradeInfo model.TradeInfo) (*model.TradeInfo, error)
+	InsertWhiteList(ctx context.Context, whiteList []model.WhiteList) (*[]model.WhiteList, error)
 }
 
 type initDataConnection struct {
@@ -63,4 +64,22 @@ func (db *initDataConnection) InsertDataTradeInfo(
 		}
 	}
 	return &tradeInfo, nil
+}
+
+func (db *initDataConnection) InsertWhiteList(
+	ctx context.Context,
+	whiteList []model.WhiteList,
+) (*[]model.WhiteList, error) {
+	tx := db.connection.WithContext(ctx)
+
+	var mdWhiteList model.WhiteList
+	_ = tx.Where(`"id" = ?`, 1).Find(&mdWhiteList)
+	if mdWhiteList.ID == 0 {
+		res := tx.Save(&whiteList)
+		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+			db.log.Errorf("insert white List error %v", res.Error)
+			return nil, res.Error
+		}
+	}
+	return &whiteList, nil
 }

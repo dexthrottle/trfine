@@ -23,6 +23,7 @@ type AppConfig interface {
 type InitData interface {
 	InsertDataTradeParams(ctx context.Context, tradeParams model.TradeParams) (*model.TradeParams, error)
 	InsertDataTradeInfo(ctx context.Context, tradeInfo model.TradeInfo) (*model.TradeInfo, error)
+	InsertWhiteList(ctx context.Context, whiteList []model.WhiteList) (*[]model.WhiteList, error)
 }
 
 type Repository struct {
