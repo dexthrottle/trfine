@@ -10,7 +10,7 @@ import (
 
 type SymbolsRepository interface {
 	InsertSymbols(ctx context.Context, a model.Symbols) (*model.Symbols, error)
-	DeleteSymbols(ctx context.Context, pair string) (*model.Symbols, error)
+	DeleteSymbols(ctx context.Context, pair string) error
 	GetAllSymbols(ctx context.Context, pair string) ([]*model.Symbols, error)
 	DeleteAllSymbols(ctx context.Context) error
 	UpdateSymbols(ctx context.Context, symbols model.Symbols, pair string) (*model.Symbols, error)
@@ -62,15 +62,15 @@ func (db *symbolsConnection) UpdateSymbols(ctx context.Context, symbols model.Sy
 	return &mdSymbols, nil
 }
 
-func (db *symbolsConnection) DeleteSymbols(ctx context.Context, pair string) (*model.Symbols, error) {
+func (db *symbolsConnection) DeleteSymbols(ctx context.Context, pair string) error {
 	tx := db.connection.WithContext(ctx)
 	var symbols *model.Symbols
 	res := tx.Delete(&symbols).Where(`pair = ?`, pair)
 	if res.Error != nil {
 		db.log.Errorf("delete symbols error %v", res.Error)
-		return nil, res.Error
+		return res.Error
 	}
-	return symbols, nil
+	return nil
 }
 
 func (db *symbolsConnection) DeleteAllSymbols(ctx context.Context) error {

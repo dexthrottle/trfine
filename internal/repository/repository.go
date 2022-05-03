@@ -28,25 +28,25 @@ type InitData interface {
 
 type AveragePercent interface {
 	InsertAveragePercent(ctx context.Context, a model.AveragePercent) (*model.AveragePercent, error)
-	DeleteAllAveragePercent(ctx context.Context, day string) ([]*model.AveragePercent, error)
+	DeleteAllAveragePercent(ctx context.Context, day string) error
 	GetAllAveragePercent(ctx context.Context, day string) ([]*model.AveragePercent, error)
 }
 
 type CommissionBurn interface {
 	InsertCommissionBurn(ctx context.Context, a model.CommissionBurn) (*model.CommissionBurn, error)
-	DeleteAllCommissionBurn(ctx context.Context, day string) ([]*model.CommissionBurn, error)
+	DeleteAllCommissionBurn(ctx context.Context, day string) error
 	GetAllCommissionBurn(ctx context.Context, day string) ([]*model.CommissionBurn, error)
 }
 
 type DailyProfit interface {
 	InsertDailyProfit(ctx context.Context, a model.DailyProfit) (*model.DailyProfit, error)
-	DeleteAllDailyProfit(ctx context.Context, day string) ([]*model.DailyProfit, error)
+	DeleteAllDailyProfit(ctx context.Context, day string) error
 	GetAllDailyProfit(ctx context.Context, day string) ([]*model.DailyProfit, error)
 }
 
 type Symbols interface {
 	InsertSymbols(ctx context.Context, a model.Symbols) (*model.Symbols, error)
-	DeleteSymbols(ctx context.Context, pair string) (*model.Symbols, error)
+	DeleteSymbols(ctx context.Context, pair string) error
 	GetAllSymbols(ctx context.Context, pair string) ([]*model.Symbols, error)
 	DeleteAllSymbols(ctx context.Context) error
 	UpdateSymbols(ctx context.Context, symbols model.Symbols, pair string) (*model.Symbols, error)
@@ -54,7 +54,7 @@ type Symbols interface {
 
 type TradeInfo interface {
 	InsertTradeInfo(ctx context.Context, a model.TradeInfo) (*model.TradeInfo, error)
-	DeleteTradeInfo(ctx context.Context) (*model.TradeInfo, error)
+	DeleteTradeInfo(ctx context.Context) error
 	GetAllTradeInfo(ctx context.Context) ([]*model.TradeInfo, error)
 	UpdateTradeInfo(ctx context.Context, tradeInfo model.TradeInfo) (*model.TradeInfo, error)
 }
@@ -64,6 +64,13 @@ type TradePairs interface {
 	DeleteTradePairs(ctx context.Context) error
 	GetTradePairs(ctx context.Context, pair string) (*model.TradePairs, error)
 	// UpdateTradePairs(ctx context.Context, tradePairs model.TradePairs) (*model.TradePairs, error)
+}
+
+type TradeParams interface {
+	InsertTradeParams(ctx context.Context, a model.TradeParams) (*model.TradeParams, error)
+	DeleteTradeParams(ctx context.Context, nameList string) error
+	GetTradeParams(ctx context.Context, nameList string) (*model.TradeParams, error)
+	UpdateTradeParams(ctx context.Context, tradeParams model.TradeParams, nameList string) (*model.TradeParams, error)
 }
 
 type Repository struct {
@@ -76,6 +83,7 @@ type Repository struct {
 	Symbols
 	TradeInfo
 	TradePairs
+	TradeParams
 }
 
 func NewRepository(ctx context.Context, db *gorm.DB, log logging.Logger) *Repository {
@@ -89,5 +97,6 @@ func NewRepository(ctx context.Context, db *gorm.DB, log logging.Logger) *Reposi
 		Symbols:        NewSymbolsRepository(ctx, db, log),
 		TradeInfo:      NewTradeInfoRepository(ctx, db, log),
 		TradePairs:     NewTradePairsRepository(ctx, db, log),
+		TradeParams:    NewTradeParamsRepository(ctx, db, log),
 	}
 }

@@ -4,7 +4,7 @@ package model
 type TradeParams struct {
 	ID              uint64 `gorm:"primary_key:auto_increment" json:"id"`
 	ExternalID      uint64 `gorm:"type:int;default:0" json:"external_id"`
-	NameList        string `gorm:"type:varchar(255)" json:"name_list"`
+	NameList        string `gorm:"type:varchar(255);unique;not null" json:"name_list"`
 	MinBalance      string `gorm:"type:varchar(255)" json:"min_balance"`
 	MinOrder        string `gorm:"type:varchar(255)" json:"min_order"`
 	MinPrice        string `gorm:"type:varchar(255)" json:"min_price"`

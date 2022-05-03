@@ -10,9 +10,9 @@ import (
 
 type TradeParamsRepository interface {
 	InsertTradeParams(ctx context.Context, a model.TradeParams) (*model.TradeParams, error)
-	DeleteTradeParams(ctx context.Context) (*model.TradeParams, error)
-	GetAllTradeParams(ctx context.Context) ([]*model.TradeParams, error)
-	UpdateTradeParams(ctx context.Context, tradeParams model.TradeParams) (*model.TradeParams, error)
+	DeleteTradeParams(ctx context.Context, nameList string) error
+	GetTradeParams(ctx context.Context, nameList string) (*model.TradeParams, error)
+	UpdateTradeParams(ctx context.Context, tradeParams model.TradeParams, nameList string) (*model.TradeParams, error)
 }
 
 type tradeParamsConnection struct {
@@ -32,28 +32,32 @@ func NewTradeParamsRepository(ctx context.Context, db *gorm.DB, log logging.Logg
 func (db *tradeParamsConnection) InsertTradeParams(ctx context.Context, a model.TradeParams) (*model.TradeParams, error) {
 	tx := db.connection.WithContext(ctx)
 	res := tx.Save(&a)
-
 	if res.Error != nil {
 		return nil, res.Error
 	}
 	return &a, nil
 }
 
-func (db *tradeParamsConnection) GetAllTradeParams(ctx context.Context) ([]*model.TradeParams, error) {
+func (db *tradeParamsConnection) GetTradeParams(ctx context.Context, nameList string) (*model.TradeParams, error) {
 	tx := db.connection.WithContext(ctx)
-	var tradeParams []*model.TradeParams
-	res := tx.Where(`id = ?`, 1).Find(&tradeParams)
+	var tradeParams *model.TradeParams
+	res := tx.Where(`name_list = ?`, nameList).Find(&tradeParams)
 	if res.Error != nil {
-		db.log.Errorf("get all tradeParams error %v", res.Error)
+		db.log.Errorf("get trade Params error %v", res.Error)
 		return nil, res.Error
 	}
 	return tradeParams, nil
 }
 
-func (db *tradeParamsConnection) UpdateTradeParams(ctx context.Context, tradeParams model.TradeParams) (*model.TradeParams, error) {
+func (db *tradeParamsConnection) UpdateTradeParams(
+	ctx context.Context,
+	tradeParams model.TradeParams,
+	nameList string,
+) (*model.TradeParams, error) {
+
 	tx := db.connection.WithContext(ctx)
 	mdTradeParams := model.TradeParams{}
-	res := tx.Model(&mdTradeParams).Where(`id = ?`, 1).Updates(tradeParams)
+	res := tx.Model(&mdTradeParams).Where(`name_list = ?`, nameList).Updates(tradeParams)
 	if res.Error != nil {
 		db.log.Error(res.Error)
 		return nil, res.Error
@@ -61,13 +65,13 @@ func (db *tradeParamsConnection) UpdateTradeParams(ctx context.Context, tradePar
 	return &mdTradeParams, nil
 }
 
-func (db *tradeParamsConnection) DeleteTradeParams(ctx context.Context) (*model.TradeParams, error) {
+func (db *tradeParamsConnection) DeleteTradeParams(ctx context.Context, nameList string) error {
 	tx := db.connection.WithContext(ctx)
 	var tradeParams *model.TradeParams
-	res := tx.Delete(&tradeParams).Where(`id = ?`, 1)
+	res := tx.Delete(&tradeParams).Where(`name_list = ?`, nameList)
 	if res.Error != nil {
-		db.log.Errorf("delete tradeParams error %v", res.Error)
-		return nil, res.Error
+		db.log.Errorf("delete trade Params error %v", res.Error)
+		return res.Error
 	}
-	return tradeParams, nil
+	return nil
 }

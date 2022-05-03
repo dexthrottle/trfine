@@ -10,7 +10,7 @@ import (
 
 type TradeInfoRepository interface {
 	InsertTradeInfo(ctx context.Context, a model.TradeInfo) (*model.TradeInfo, error)
-	DeleteTradeInfo(ctx context.Context) (*model.TradeInfo, error)
+	DeleteTradeInfo(ctx context.Context) error
 	GetAllTradeInfo(ctx context.Context) ([]*model.TradeInfo, error)
 	UpdateTradeInfo(ctx context.Context, tradeInfo model.TradeInfo) (*model.TradeInfo, error)
 }
@@ -61,13 +61,13 @@ func (db *tradeInfoConnection) UpdateTradeInfo(ctx context.Context, tradeInfo mo
 	return &mdTradeInfo, nil
 }
 
-func (db *tradeInfoConnection) DeleteTradeInfo(ctx context.Context) (*model.TradeInfo, error) {
+func (db *tradeInfoConnection) DeleteTradeInfo(ctx context.Context) error {
 	tx := db.connection.WithContext(ctx)
 	var tradeInfo *model.TradeInfo
 	res := tx.Delete(&tradeInfo).Where(`id = ?`, 1)
 	if res.Error != nil {
 		db.log.Errorf("delete tradeInfo error %v", res.Error)
-		return nil, res.Error
+		return res.Error
 	}
-	return tradeInfo, nil
+	return nil
 }
