@@ -10,6 +10,7 @@ import (
 
 	"github.com/dexthrottle/trfine/internal/dto"
 	"github.com/dexthrottle/trfine/internal/handler"
+	"github.com/dexthrottle/trfine/internal/model"
 	"github.com/dexthrottle/trfine/internal/repository"
 	"github.com/dexthrottle/trfine/internal/service"
 	"github.com/dexthrottle/trfine/pkg/logging"
@@ -39,6 +40,8 @@ func Run(dbName string) {
 	repos := repository.NewRepository(ctx, db, log)
 	log.Info("Connect repository successfully!")
 
+	testSymbols(ctx, repos)
+
 	// services init
 	services := service.NewService(ctx, *repos, log)
 	log.Info("Connect services successfully!")
@@ -64,6 +67,14 @@ func Run(dbName string) {
 	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
 	<-quit
 	log.Info("Exit..")
+}
+
+func testSymbols(ctx context.Context, repos *repository.Repository) {
+	m, err := repos.Symbols.UpdateSymbols(ctx, model.Symbols{BaseAsset: "123123dfasdasd"}, "123")
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Printf("%+v", &m.BaseAsset)
 }
 
 func initDefaultData(ctx context.Context, services service.Service) {
