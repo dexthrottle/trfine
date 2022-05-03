@@ -52,6 +52,20 @@ type Symbols interface {
 	UpdateSymbols(ctx context.Context, symbols model.Symbols, pair string) (*model.Symbols, error)
 }
 
+type TradeInfo interface {
+	InsertTradeInfo(ctx context.Context, a model.TradeInfo) (*model.TradeInfo, error)
+	DeleteTradeInfo(ctx context.Context) (*model.TradeInfo, error)
+	GetAllTradeInfo(ctx context.Context) ([]*model.TradeInfo, error)
+	UpdateTradeInfo(ctx context.Context, tradeInfo model.TradeInfo) (*model.TradeInfo, error)
+}
+
+type TradePairs interface {
+	InsertTradePairs(ctx context.Context, a model.TradePairs) (*model.TradePairs, error)
+	DeleteTradePairs(ctx context.Context) error
+	GetTradePairs(ctx context.Context, pair string) (*model.TradePairs, error)
+	// UpdateTradePairs(ctx context.Context, tradePairs model.TradePairs) (*model.TradePairs, error)
+}
+
 type Repository struct {
 	User
 	AppConfig
@@ -60,6 +74,8 @@ type Repository struct {
 	CommissionBurn
 	DailyProfit
 	Symbols
+	TradeInfo
+	TradePairs
 }
 
 func NewRepository(ctx context.Context, db *gorm.DB, log logging.Logger) *Repository {
@@ -71,5 +87,7 @@ func NewRepository(ctx context.Context, db *gorm.DB, log logging.Logger) *Reposi
 		CommissionBurn: NewCommissionBurnRepository(ctx, db, log),
 		DailyProfit:    NewDailyProfitRepository(ctx, db, log),
 		Symbols:        NewSymbolsRepository(ctx, db, log),
+		TradeInfo:      NewTradeInfoRepository(ctx, db, log),
+		TradePairs:     NewTradePairsRepository(ctx, db, log),
 	}
 }
