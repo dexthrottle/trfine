@@ -10,7 +10,7 @@ import (
 
 type CommissionBurnRepository interface {
 	InsertCommissionBurn(ctx context.Context, a model.CommissionBurn) (*model.CommissionBurn, error)
-	DeleteAllCommissionBurn(ctx context.Context, day string) ([]*model.CommissionBurn, error)
+	DeleteAllCommissionBurn(ctx context.Context, day string) error
 	GetAllCommissionBurn(ctx context.Context, day string) ([]*model.CommissionBurn, error)
 }
 
@@ -49,13 +49,13 @@ func (db *commissionBurnConnection) GetAllCommissionBurn(ctx context.Context, da
 	return commissionBurns, nil
 }
 
-func (db *commissionBurnConnection) DeleteAllCommissionBurn(ctx context.Context, day string) ([]*model.CommissionBurn, error) {
+func (db *commissionBurnConnection) DeleteAllCommissionBurn(ctx context.Context, day string) error {
 	tx := db.connection.WithContext(ctx)
 	var commissionBurns []*model.CommissionBurn
 	res := tx.Delete(&commissionBurns).Where(`day = ?`, day)
 	if res.Error != nil {
 		db.log.Errorf("delete all commission Burn error %v", res.Error)
-		return nil, res.Error
+		return res.Error
 	}
-	return commissionBurns, nil
+	return nil
 }

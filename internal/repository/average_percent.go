@@ -10,7 +10,7 @@ import (
 
 type AveragePercentRepository interface {
 	InsertAveragePercent(ctx context.Context, a model.AveragePercent) (*model.AveragePercent, error)
-	DeleteAllAveragePercent(ctx context.Context, day string) ([]*model.AveragePercent, error)
+	DeleteAllAveragePercent(ctx context.Context, day string) error
 	GetAllAveragePercent(ctx context.Context, day string) ([]*model.AveragePercent, error)
 }
 
@@ -49,13 +49,13 @@ func (db *averagePercentConnection) GetAllAveragePercent(ctx context.Context, da
 	return averagePercents, nil
 }
 
-func (db *averagePercentConnection) DeleteAllAveragePercent(ctx context.Context, day string) ([]*model.AveragePercent, error) {
+func (db *averagePercentConnection) DeleteAllAveragePercent(ctx context.Context, day string) error {
 	tx := db.connection.WithContext(ctx)
 	var averagePercents []*model.AveragePercent
 	res := tx.Delete(&averagePercents).Where(`day = ?`, day)
 	if res.Error != nil {
 		db.log.Errorf("delete all average Percents error %v", res.Error)
-		return nil, res.Error
+		return res.Error
 	}
-	return averagePercents, nil
+	return nil
 }

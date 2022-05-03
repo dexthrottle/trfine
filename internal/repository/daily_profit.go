@@ -10,7 +10,7 @@ import (
 
 type DailyProfitRepository interface {
 	InsertDailyProfit(ctx context.Context, a model.DailyProfit) (*model.DailyProfit, error)
-	DeleteAllDailyProfit(ctx context.Context, day string) ([]*model.DailyProfit, error)
+	DeleteAllDailyProfit(ctx context.Context, day string) error
 	GetAllDailyProfit(ctx context.Context, day string) ([]*model.DailyProfit, error)
 }
 
@@ -49,13 +49,13 @@ func (db *dailyProfitConnection) GetAllDailyProfit(ctx context.Context, day stri
 	return dailyProfits, nil
 }
 
-func (db *dailyProfitConnection) DeleteAllDailyProfit(ctx context.Context, day string) ([]*model.DailyProfit, error) {
+func (db *dailyProfitConnection) DeleteAllDailyProfit(ctx context.Context, day string) error {
 	tx := db.connection.WithContext(ctx)
 	var dailyProfits []*model.DailyProfit
 	res := tx.Delete(&dailyProfits).Where(`day = ?`, day)
 	if res.Error != nil {
 		db.log.Errorf("delete all daily Profit error %v", res.Error)
-		return nil, res.Error
+		return res.Error
 	}
-	return dailyProfits, nil
+	return nil
 }
