@@ -24,6 +24,7 @@ type AppConfig interface {
 type InitData interface {
 	InsertDataTradeParams(ctx context.Context) error
 	InsertDataTradeInfo(ctx context.Context) error
+	InsertWhiteList(ctx context.Context) error
 }
 
 type Service struct {

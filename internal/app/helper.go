@@ -47,8 +47,8 @@ func firstRunApp(reader *bufio.Reader) dto.AppConfigDTO {
 		break
 	}
 
-	tgNotificationChannel := fmt.Sprintln("Введите название телеграм-канала: ")
-
+	fmt.Print("Введите название телеграм-канала: @")
+	tgNotificationChannel, _ := reader.ReadString('\n')
 	appCfgDto := dto.AppConfigDTO{
 		TgApiToken:            strings.TrimSuffix(strings.TrimSuffix(tgApiToken, "\n"), "\r"),
 		ByBitUID:              byBitUID,

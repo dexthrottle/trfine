@@ -12,6 +12,7 @@ import (
 type InitDataService interface {
 	InsertDataTradeParams(ctx context.Context) error
 	InsertDataTradeInfo(ctx context.Context) error
+	InsertWhiteList(ctx context.Context) error
 }
 
 type initDataService struct {
@@ -54,5 +55,19 @@ func (s *initDataService) InsertDataTradeInfo(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (s *initDataService) InsertWhiteList(ctx context.Context) error {
+	whiteList := initdata.GetWhiteList()
+	mdWhiteList := []model.WhiteList{}
+	for _, v := range whiteList {
+		mdWhiteList = append(mdWhiteList, model.WhiteList{Pair: v.Pair})
+	}
+	_, err := s.initDataRepository.InsertWhiteList(ctx, mdWhiteList)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
