@@ -73,6 +73,12 @@ type TradeParams interface {
 	UpdateTradeParams(ctx context.Context, tradeParams model.TradeParams, nameList string) (*model.TradeParams, error)
 }
 
+type TrailingOrder interface {
+	InsertTrailingOrders(ctx context.Context, a model.TrailingOrders) (*model.TrailingOrders, error)
+	DeleteTrailingOrders(ctx context.Context, pair string) error
+	GetTrailingOrders(ctx context.Context, pair string) (*[]model.TrailingOrders, error)
+}
+
 type Repository struct {
 	User
 	AppConfig
@@ -84,6 +90,7 @@ type Repository struct {
 	TradeInfo
 	TradePairs
 	TradeParams
+	TrailingOrder
 }
 
 func NewRepository(ctx context.Context, db *gorm.DB, log logging.Logger) *Repository {
@@ -98,5 +105,6 @@ func NewRepository(ctx context.Context, db *gorm.DB, log logging.Logger) *Reposi
 		TradeInfo:      NewTradeInfoRepository(ctx, db, log),
 		TradePairs:     NewTradePairsRepository(ctx, db, log),
 		TradeParams:    NewTradeParamsRepository(ctx, db, log),
+		TrailingOrder:  NewTrailingOrdersRepository(ctx, db, log),
 	}
 }

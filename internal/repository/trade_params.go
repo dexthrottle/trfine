@@ -68,7 +68,7 @@ func (db *tradeParamsConnection) UpdateTradeParams(
 func (db *tradeParamsConnection) DeleteTradeParams(ctx context.Context, nameList string) error {
 	tx := db.connection.WithContext(ctx)
 	var tradeParams *model.TradeParams
-	res := tx.Delete(&tradeParams).Where(`name_list = ?`, nameList)
+	res := tx.Where(`name_list = ?`, nameList).Delete(&tradeParams)
 	if res.Error != nil {
 		db.log.Errorf("delete trade Params error %v", res.Error)
 		return res.Error

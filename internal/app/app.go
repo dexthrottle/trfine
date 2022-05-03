@@ -10,7 +10,6 @@ import (
 
 	"github.com/dexthrottle/trfine/internal/dto"
 	"github.com/dexthrottle/trfine/internal/handler"
-	"github.com/dexthrottle/trfine/internal/model"
 	"github.com/dexthrottle/trfine/internal/repository"
 	"github.com/dexthrottle/trfine/internal/service"
 	"github.com/dexthrottle/trfine/pkg/logging"
@@ -40,7 +39,9 @@ func Run(dbName string) {
 	repos := repository.NewRepository(ctx, db, log)
 	log.Info("Connect repository successfully!")
 
-	// testSymbols(ctx, repos)
+	// ----------------------------------//
+	testSymbols(ctx, repos)
+	// ----------------------------------//
 
 	// services init
 	services := service.NewService(ctx, *repos, log)
@@ -70,15 +71,16 @@ func Run(dbName string) {
 }
 
 func testSymbols(ctx context.Context, repos *repository.Repository) {
-	m, err := repos.TradePairs.InsertTradePairs(ctx, model.TradePairs{Pair: "eqweqwe"})
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Printf("ID = %d\n", &m.ID)
-	// err := repos.TradePairs.DeleteTradePairs(ctx)
+	// m, err := repos.TrailingOrder.GetTrailingOrders(ctx, "qwe")
 	// if err != nil {
 	// 	fmt.Println(err)
 	// }
+	// fmt.Printf("%+v\n", m)
+	err := repos.TrailingOrder.DeleteTrailingOrders(ctx, "qwe")
+	if err != nil {
+		fmt.Println(err)
+	}
+
 }
 
 func initDefaultData(ctx context.Context, services service.Service) {
