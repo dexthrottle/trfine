@@ -27,7 +27,6 @@ func NewDB(log *logging.Logger, dbName string) (*gorm.DB, error) {
 		model.TradePairs{},
 		model.TradeParams{},
 		model.TrailingOrders{},
-		model.User{},
 		model.WhiteList{},
 		model.CommissionBurn{},
 	)
