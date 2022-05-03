@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/dexthrottle/trfine/internal/model"
 	"gorm.io/gorm"
@@ -27,10 +26,13 @@ func NewAppCfgRepository(ctx context.Context, db *gorm.DB) AppConfigRepository {
 
 func (db *appCfgConnection) InsertAppConfig(ctx context.Context, appCfg model.AppConfig) (*model.AppConfig, error) {
 	tx := db.connection.WithContext(ctx)
-	res := tx.Save(&appCfg)
-	fmt.Println(res.Error)
-	if res.Error != nil {
-		return nil, res.Error
+	var mdAppConfig model.AppConfig
+	_ = tx.Where(`"id" = ?`, 1).Find(&mdAppConfig)
+	if mdAppConfig.ID == 0 {
+		res := tx.Save(&appCfg)
+		if res.Error != nil {
+			return nil, res.Error
+		}
 	}
 	return &appCfg, nil
 }

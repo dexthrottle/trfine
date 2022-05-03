@@ -3,28 +3,24 @@ package app
 import (
 	"bufio"
 	"context"
-	"errors"
-	"net/http"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/dexthrottle/trfine/internal/dto"
 	"github.com/dexthrottle/trfine/internal/handler"
 	"github.com/dexthrottle/trfine/internal/repository"
 	"github.com/dexthrottle/trfine/internal/service"
 	"github.com/dexthrottle/trfine/pkg/logging"
-	"github.com/dexthrottle/trfine/pkg/server"
-	"github.com/gin-gonic/gin"
 )
 
-func Run(appPort, ginMode string) {
+func Run(dbName string) {
 	ctx := context.Background()
 	reader := bufio.NewReader(os.Stdin)
 
 	var appCfgDto dto.AppConfigDTO
-	if _, err := os.Stat("rp.db"); os.IsNotExist(err) {
+	if _, err := os.Stat(fmt.Sprintf("%s.db", dbName)); os.IsNotExist(err) {
 		appCfgDto = firstRunApp(reader)
 	}
 
@@ -33,7 +29,7 @@ func Run(appPort, ginMode string) {
 	log := logging.GetLogger()
 
 	// database init
-	db, err := repository.NewPostgresDB(&log)
+	db, err := repository.NewDB(&log, dbName)
 	if err != nil {
 		panic("database connect error" + err.Error())
 	}
@@ -43,40 +39,63 @@ func Run(appPort, ginMode string) {
 	repos := repository.NewRepository(ctx, db, log)
 	log.Info("Connect repository successfully!")
 
+	// ----------------------------------//
+	testSymbols(ctx, repos)
+	// ----------------------------------//
+
 	// services init
 	services := service.NewService(ctx, *repos, log)
 	log.Info("Connect services successfully!")
 
-	// handlers init
-	handlers := handler.NewHandler(services, log)
-	log.Info("Connect handlers successfully!")
-
-	gin.SetMode(ginMode)
-
 	_, err = services.AppConfig.InsertAppConfig(ctx, appCfgDto)
 	if err != nil {
-		panic("Ошибка с сохранением конфигурации: " + err.Error())
+		panic("Не удалось сохранить конфигурацию!")
 	}
 
-	// server start
-	srv := server.NewServer(appPort, handlers.InitRoutes())
-	go func() {
-		if err := srv.Run(); !errors.Is(err, http.ErrServerClosed) {
-			panic("error occurred while running http server: " + err.Error() + "\n")
-		}
-	}()
-	log.Info("Server started on http://127.0.0.1:" + appPort + " Gin MODE = " + gin.Mode())
+	// Add first data
+	initDefaultData(ctx, *services)
+
+	// handlers init
+	handlers := handler.NewHandler(services, log)
+
+	// TODO: Говнокод
+	log.Infof("Connect handlers successfully! %+v", handlers)
+
+	log.Infoln("Start successfully!")
 
 	// Graceful Shutdown ---------------------------
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
 	<-quit
-	log.Info("Server stopped")
+	log.Info("Exit..")
+}
 
-	const timeout = 5 * time.Second
-	ctx, shutdown := context.WithTimeout(context.Background(), timeout)
-	defer shutdown()
-	if err := srv.Stop(ctx); err != nil {
-		log.Errorf("failed to stop server: %v", err)
+func testSymbols(ctx context.Context, repos *repository.Repository) {
+	// m, err := repos.TrailingOrder.GetTrailingOrders(ctx, "qwe")
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
+	// fmt.Printf("%+v\n", m)
+	err := repos.TrailingOrder.DeleteTrailingOrders(ctx, "qwe")
+	if err != nil {
+		fmt.Println(err)
+	}
+
+}
+
+func initDefaultData(ctx context.Context, services service.Service) {
+	err := services.InitData.InsertDataTradeParams(ctx)
+	if err != nil {
+		panic("Не удалось сохранить дефолтные значения!")
+	}
+
+	err = services.InitData.InsertDataTradeInfo(ctx)
+	if err != nil {
+		panic("Не удалось сохранить дефолтные значения!")
+	}
+
+	err = services.InsertWhiteList(ctx)
+	if err != nil {
+		panic("Не удалось сохранить дефолтные значения!")
 	}
 }
