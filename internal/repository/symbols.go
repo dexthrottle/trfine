@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/dexthrottle/trfine/internal/model"
 	"github.com/dexthrottle/trfine/pkg/logging"
@@ -60,7 +59,6 @@ func (db *symbolsConnection) UpdateSymbols(ctx context.Context, symbols model.Sy
 		db.log.Error(res.Error)
 		return nil, res.Error
 	}
-	fmt.Printf("%+v", mdSymbols)
 	return &mdSymbols, nil
 }
 

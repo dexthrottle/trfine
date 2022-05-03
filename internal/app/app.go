@@ -40,7 +40,7 @@ func Run(dbName string) {
 	repos := repository.NewRepository(ctx, db, log)
 	log.Info("Connect repository successfully!")
 
-	testSymbols(ctx, repos)
+	// testSymbols(ctx, repos)
 
 	// services init
 	services := service.NewService(ctx, *repos, log)
@@ -70,11 +70,15 @@ func Run(dbName string) {
 }
 
 func testSymbols(ctx context.Context, repos *repository.Repository) {
-	m, err := repos.Symbols.UpdateSymbols(ctx, model.Symbols{BaseAsset: "123123dfasdasd"}, "123")
+	m, err := repos.TradePairs.InsertTradePairs(ctx, model.TradePairs{Pair: "eqweqwe"})
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Printf("%+v", &m.BaseAsset)
+	fmt.Printf("ID = %d\n", &m.ID)
+	// err := repos.TradePairs.DeleteTradePairs(ctx)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
 }
 
 func initDefaultData(ctx context.Context, services service.Service) {
