@@ -123,6 +123,8 @@ func (l licenseProgram) CheckLicense() {
 	if err != nil {
 		l.log.Fatalln(err)
 	}
+
+	// TODO: Дописать вторую часть проверки лицензии
 	l.log.Printf("%+v", responseMsg)
 
 }
