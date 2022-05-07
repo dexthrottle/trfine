@@ -1,7 +1,7 @@
-package rsakeys
+package license
 
 var (
-	PublicKey = `-----BEGIN PUBLIC KEY-----
+	publicKeyLicense = `-----BEGIN PUBLIC KEY-----
 MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEA16wFdUSan6SXkUahAKLV
 Y+0sHiQqhrl2UazDQAqGfMo+YVzhW50hBHL5aaK9har0XQDMu/RQS57Gz2UCANo3
 C+q2gdHBrbykV/qKjOSFKy6BdCfmaooRd02Jrc4fR3ov1FmmqjV76rG6ET/f9Vzz
@@ -15,7 +15,8 @@ r08xAtvRNc2VDD1unaxtRWBfSKIlqJBAqeo2XrhBQq3ZnJrd3bc3wroDa0yuUFNy
 GnGbY6++D4OjDmr312Z9xb77AHhH8QOkXs3D4Q6SMVAYeJtpsE+uUuQYBOw3tTS1
 UcKrqtblH7DMFndGyak1uicCAwEAAQ==
 -----END PUBLIC KEY-----`
-	PrivateKey = `-----BEGIN RSA PRIVATE KEY-----
+
+	privateKeyLicense = `-----BEGIN RSA PRIVATE KEY-----
 MIIJJwIBAAKCAgEAvNHZ68ghSaey0iLJJ7zDgS4bP1V0VEbGZNAdU4MDAvAAhfvx
 9HxsDtmNeFydA/c6F8gFasQtYwmecYLyuFarBcDhHFGh7UMW8Ln5ZDZ57SLAI5j+
 G7ax7SUNAfIIfyf6eeWDqLUCtcz6BeESgNzKqKHgsVZLkTLm7oX6quc1W4M173li

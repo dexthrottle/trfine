@@ -20,10 +20,6 @@ type InitData interface {
 	InsertWhiteList(ctx context.Context) error
 }
 
-type TestCheckLicense interface {
-	CheckLicense()
-}
-
 // type AveragePercent interface {
 // 	InsertAveragePercent(ctx context.Context, a model.AveragePercent) (*model.AveragePercent, error)
 // }
@@ -31,7 +27,6 @@ type TestCheckLicense interface {
 type Service struct {
 	AppConfig
 	InitData
-	TestCheckLicense
 	// AveragePercent
 }
 

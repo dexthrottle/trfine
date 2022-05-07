@@ -10,6 +10,7 @@ import (
 
 	"github.com/dexthrottle/trfine/internal/dto"
 	"github.com/dexthrottle/trfine/internal/handler"
+	"github.com/dexthrottle/trfine/internal/license"
 	"github.com/dexthrottle/trfine/internal/repository"
 	"github.com/dexthrottle/trfine/internal/service"
 	"github.com/dexthrottle/trfine/pkg/logging"
@@ -63,7 +64,8 @@ func Run(dbName string) {
 
 	log.Infoln("Start successfully!")
 
-	service.CheckLicense()
+	// Проверка лицензии Бота
+	license.NewLicenseProgram(log).CheckLicense()
 
 	// Graceful Shutdown ---------------------------
 	quit := make(chan os.Signal, 1)
