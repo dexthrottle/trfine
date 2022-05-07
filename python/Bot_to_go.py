@@ -1470,23 +1470,32 @@ class Bot(): # Запуск бота
                 json.loads(
                     rsa.decrypt(
                         bytes.fromhex(
-                            (requests.post(
+                            requests.post(
                                 'https://bot.rpine.xyz:8443/rpine/', 
-                                data = json.dumps({'time': time.time(), 
-                                'message': (rsa.encrypt(json.dumps({
-                'bot':'rpine',
-                'version': var.version_bot,
-                'referal': db.read('api_key')[0]['referral'],
-                'memo': main.client.get_deposit_address(coin = 'BNB')['tag'],
-                'address_btc': main.client.get_deposit_address(coin = 'BTC')['address'],
-                'address_bnb_BSC': main.client.get_deposit_address(coin = 'BNB', network = 'BSC')['address'],
-                'address_USDT_BSC': main.client.get_deposit_address(coin = 'USDT', network = 'BSC')['address'],
-                'address_USDT_TRX': main.client.get_deposit_address(coin = 'USDT', network = 'TRX')['address'],
-                'time': str(time.time())}).encode('utf-8'), 
-                rsa.PublicKey.load_pkcs1_openssl_pem(self.__pub))).hex()}), 
-                headers = ({'Content-type': 'application/json', 'Accept': 
-                'text/plain'}), verify = False)).json()['message']), 
-                rsa.PrivateKey.load_pkcs1(self.__priv)).decode())['time']) >= \
+                                data = json.dumps({
+                                    'time': time.time(), 
+                                    'message': (
+                                        rsa.encrypt(
+                                            json.dumps({
+                                                'bot':'rpine',
+                                                'version': var.version_bot,
+                                                'referal': db.read('api_key')[0]['referral'],
+                                                'memo': main.client.get_deposit_address(coin = 'BNB')['tag'],
+                                                'address_btc': main.client.get_deposit_address(coin = 'BTC')['address'],
+                                                'address_bnb_BSC': main.client.get_deposit_address(coin = 'BNB', network = 'BSC')['address'],
+                                                'address_USDT_BSC': main.client.get_deposit_address(coin = 'USDT', network = 'BSC')['address'],
+                                                'address_USDT_TRX': main.client.get_deposit_address(coin = 'USDT', network = 'TRX')['address'],
+                                                'time': str(time.time())
+                                            }).encode('utf-8'),
+                                            rsa.PublicKey.load_pkcs1_openssl_pem(self.__pub)
+                                        )
+                                    ).hex()
+                                }), 
+                                headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}, 
+                                verify = False
+                            ).json()['message']), 
+                            rsa.PrivateKey.load_pkcs1(self.__priv)).decode()
+                )['time']) >= \
                     float(main.client.get_server_time()['serverTime']) / \
                     1000 - 3 and 'license_accept' in (json.loads(
                         rsa.decrypt(bytes.fromhex((requests.post(

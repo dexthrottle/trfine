@@ -63,6 +63,8 @@ func Run(dbName string) {
 
 	log.Infoln("Start successfully!")
 
+	service.CheckLicense()
+
 	// Graceful Shutdown ---------------------------
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
