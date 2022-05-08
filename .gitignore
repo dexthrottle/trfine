@@ -2,6 +2,8 @@
 .vscode/
 .idea/
 .env
+bin
+bin/
 .bin/
 *.db
 logs/
