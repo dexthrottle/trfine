@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -42,6 +43,10 @@ type requestData struct {
 	Message string `json:"message"`
 }
 
+type responseByBit struct {
+	TimeNowByBit string `json:"time_now"`
+}
+
 type message struct {
 	Bot             string `json:"bot"`
 	Version         string `json:"version"`
@@ -55,19 +60,18 @@ type message struct {
 }
 
 type responseMessage struct {
-	LicenseAccept any  `json:"license_accept"`
-	FirstStart    bool `json:"first_start"`
-	Time          any  `json:"time"`
+	LicenseAccept string `json:"license_accept"`
+	FirstStart    any    `json:"first_start"`
+	Time          string `json:"time"`
 }
 
 func (l licenseProgram) CheckLicense() {
-
 	msg := message{
 		Bot:             "bot-123",
 		Version:         "version-123",
-		Referal:         "referal-123",
+		Referal:         "1113",
 		Memo:            "memo-123",
-		AddressBTC:      "addressBTC-123",
+		AddressBTC:      "2223",
 		AddressBNB_BSC:  "addressBNB_BSC-123",
 		AddressUSDT_BSC: "addressUSDT_BSC-123",
 		AddressUSDT_TRX: "addressUSDT_TRX-123",
@@ -124,9 +128,46 @@ func (l licenseProgram) CheckLicense() {
 		l.log.Fatalln(err)
 	}
 
-	// TODO: Дописать вторую часть проверки лицензии
-	l.log.Printf("%+v", responseMsg)
+	// Получение серверного времени ByBit
+	responseBB, err := l.get("https://api-testnet.bybit.com/open-api/v2/public/time")
+	if err != nil {
+		l.log.Fatalln(err)
+	}
+	defer responseBB.Body.Close()
 
+	bodyBB, err := ioutil.ReadAll(responseBB.Body)
+	if err != nil {
+		l.log.Fatalf("Error read body request - %s", err.Error())
+	}
+
+	var resDataBB responseByBit
+	err = json.Unmarshal(bodyBB, &resDataBB)
+	if err != nil {
+		l.log.Fatalln(err)
+	}
+
+	timeBB, err := strconv.ParseFloat(resDataBB.TimeNowByBit, 64)
+	if err != nil {
+		l.log.Errorln(err)
+	}
+	serverBBTime := int64(timeBB * 1000)
+
+	timeServ, err := strconv.ParseFloat(responseMsg.Time, 64)
+	if err != nil {
+		l.log.Errorln(err)
+	}
+	serverRPTime := int64(timeServ * 1000)
+
+	licenseAccept, err := strconv.ParseBool(responseMsg.LicenseAccept)
+	if err != nil {
+		l.log.Errorln(err)
+	}
+
+	if serverRPTime >= serverBBTime-3000 && licenseAccept {
+		l.log.Println(licenseAccept)
+	} else {
+		l.log.Println(false)
+	}
 }
 
 // Отправляет POST запрс на сервер
@@ -141,6 +182,25 @@ func (l licenseProgram) post(url string, payload *strings.Reader) (*http.Respons
 		return nil, err
 	}
 
+	req.Header.Add("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (l licenseProgram) get(url string) (*http.Response, error) {
+	transport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := http.Client{Transport: transport}
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
