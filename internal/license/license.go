@@ -80,70 +80,70 @@ func (l licenseProgram) CheckLicense() {
 
 	publicKey, err := l.bytesToPublicKey([]byte(publicKeyLicense))
 	if err != nil {
-		l.log.Fatalln(err)
+		l.log.Errorln(err)
 	}
 
 	msgEncrypt, err := l.encrypt(&msg, publicKey)
 	if err != nil {
-		l.log.Fatalln(err)
+		l.log.Errorln(err)
 	}
 
 	payload := strings.NewReader(fmt.Sprintf(`{"message": "%s", "time": %d}`, hex.EncodeToString(msgEncrypt), time.Now().Unix()))
 
 	response, err := l.post(rpineUrlLocal, payload)
 	if err != nil {
-		l.log.Fatalf("request error %s", err.Error())
+		l.log.Errorf("request error %s'n", err.Error())
 	}
 
 	defer response.Body.Close()
 
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		l.log.Fatalf("Error read body request - %s", err.Error())
+		l.log.Errorf("Error read body request - %s\n", err.Error())
 	}
 
 	var reqData requestData
 	err = json.Unmarshal(body, &reqData)
 	if err != nil {
-		l.log.Fatalln(err)
+		l.log.Errorln(err)
 	}
 
 	msgToHexDectipt, err := hex.DecodeString(reqData.Message)
 	if err != nil {
-		l.log.Fatalln(err)
+		l.log.Errorln(err)
 	}
 
 	privateKey, err := l.bytesToPrivateKey([]byte(privateKeyLicense))
 	if err != nil {
-		l.log.Fatalln(err)
+		l.log.Errorln(err)
 	}
 	decryptByte, err := l.decrypt(msgToHexDectipt, privateKey)
 	if err != nil {
-		l.log.Fatalln(err)
+		l.log.Errorln(err)
 	}
 
 	responseMsg := responseMessage{}
 	err = json.Unmarshal(decryptByte, &responseMsg)
 	if err != nil {
-		l.log.Fatalln(err)
+		l.log.Errorln(err)
 	}
 
 	// Получение серверного времени ByBit
 	responseBB, err := l.get("https://api-testnet.bybit.com/open-api/v2/public/time")
 	if err != nil {
-		l.log.Fatalln(err)
+		l.log.Errorln(err)
 	}
 	defer responseBB.Body.Close()
 
 	bodyBB, err := ioutil.ReadAll(responseBB.Body)
 	if err != nil {
-		l.log.Fatalf("Error read body request - %s", err.Error())
+		l.log.Errorln("Error read body request - %s", err.Error())
 	}
 
 	var resDataBB responseByBit
 	err = json.Unmarshal(bodyBB, &resDataBB)
 	if err != nil {
-		l.log.Fatalln(err)
+		l.log.Errorln(err)
 	}
 
 	timeBB, err := strconv.ParseFloat(resDataBB.TimeNowByBit, 64)
