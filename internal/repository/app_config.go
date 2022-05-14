@@ -34,7 +34,7 @@ func (db *appCfgConnection) InsertAppConfig(ctx context.Context, appCfg model.Ap
 			return nil, res.Error
 		}
 	}
-	return &appCfg, nil
+	return &mdAppConfig, nil
 }
 
 func (db *appCfgConnection) GetConfigData(ctx context.Context) (*model.AppConfig, error) {
