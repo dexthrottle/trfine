@@ -8,15 +8,17 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/dexthrottle/trfine/internal/bybit"
 	"github.com/dexthrottle/trfine/internal/dto"
-	"github.com/dexthrottle/trfine/internal/handler"
 	"github.com/dexthrottle/trfine/internal/license"
 	"github.com/dexthrottle/trfine/internal/repository"
 	"github.com/dexthrottle/trfine/internal/service"
 	"github.com/dexthrottle/trfine/pkg/logging"
+	"github.com/frankrap/bybit-api/rest"
+	"github.com/frankrap/bybit-api/ws"
 )
 
-func Run(dbName string) {
+func Run(dbName, baseURL string) {
 	ctx := context.Background()
 	reader := bufio.NewReader(os.Stdin)
 
@@ -40,29 +42,28 @@ func Run(dbName string) {
 	repos := repository.NewRepository(ctx, db, log)
 	log.Info("Connect repository successfully!")
 
-	// ----------------------------------//
-	testSymbols(ctx, repos)
-	// ----------------------------------//
-
 	// services init
 	services := service.NewService(ctx, *repos, log)
 	log.Info("Connect services successfully!")
 
-	_, err = services.AppConfig.InsertAppConfig(ctx, appCfgDto)
+	appCfg, err := services.AppConfig.InsertAppConfig(ctx, appCfgDto)
 	if err != nil {
 		panic("Не удалось сохранить конфигурацию!")
 	}
 
 	// Add first data
 	initDefaultData(ctx, *services)
-
-	// handlers init
-	handlers := handler.NewHandler(services, log)
-
-	// TODO: Говнокод
-	log.Infof("Connect handlers successfully! %+v", handlers)
-
 	log.Infoln("Start successfully!")
+
+	// Инициализация REST ByBit ---------------------------------------------------
+	bbAPIRest := initByBitRest(appCfg.ByBitApiKey, appCfg.ByBitApiSecret, baseURL, log, services)
+	log.Printf("%+v", bbAPIRest)
+	// ----------------------------------------------------------------------------
+
+	// Инициализация WebSocker ByBit -------------------------------------
+	bbAPIWS := initByBitWS(appCfg.ByBitApiKey, appCfg.ByBitApiSecret, log, services)
+	log.Printf("%+v", bbAPIWS)
+	// -------------------------------------------------------------------
 
 	// Проверка лицензии Бота
 	license.NewLicenseProgram(log).CheckLicense()
@@ -74,17 +75,23 @@ func Run(dbName string) {
 	log.Info("Exit..")
 }
 
-func testSymbols(ctx context.Context, repos *repository.Repository) {
-	// m, err := repos.TrailingOrder.GetTrailingOrders(ctx, "qwe")
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-	// fmt.Printf("%+v\n", m)
-	err := repos.TrailingOrder.DeleteTrailingOrders(ctx, "qwe")
-	if err != nil {
-		fmt.Println(err)
-	}
+func initByBitRest(byBitApiKey, byBitSecretkey, baseUrlByBit string, log logging.Logger, services *service.Service) bybit.ByBitAPIRest {
+	bybitRest := rest.New(nil, baseUrlByBit, byBitApiKey, byBitSecretkey, true)
+	bbAPIRest := bybit.NewByBit(log, bybitRest, services)
+	return bbAPIRest
+}
 
+func initByBitWS(byBitApiKey, byBitSecretkey string, log logging.Logger, services *service.Service) bybit.ByBitAPIWS {
+	cfg := &ws.Configuration{
+		Addr:          ws.HostTestnet,
+		ApiKey:        byBitApiKey,
+		SecretKey:     byBitSecretkey,
+		AutoReconnect: true,
+		DebugMode:     true,
+	}
+	bybitWS := ws.New(cfg)
+	bbAPIWS := bybit.NewByBitWS(log, bybitWS, services)
+	return bbAPIWS
 }
 
 func initDefaultData(ctx context.Context, services service.Service) {
