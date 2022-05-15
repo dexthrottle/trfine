@@ -7,7 +7,7 @@ import (
 )
 
 type ByBitAPIRest interface {
-	GetPositions() error
+	GetWalletBalance() (*rest.Balance, []byte, error)
 }
 
 type bybit struct {
@@ -25,11 +25,10 @@ func NewByBit(log logging.Logger, bybitRest *rest.ByBit, services *service.Servi
 	}
 }
 
-func (b *bybit) GetPositions() error {
-	_, _, positions, err := b.bybitRest.GetPositions()
+func (b *bybit) GetWalletBalance() (*rest.Balance, []byte, error) {
+	_, resp, balance, err := b.bybitRest.GetWalletBalance("BTC")
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
-	b.log.Printf("positions: %#v", positions)
-	return nil
+	return &balance, resp, nil
 }
