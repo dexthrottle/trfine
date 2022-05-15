@@ -1559,12 +1559,20 @@ class Bot(): # Запуск бота
         if hasattr(self, '__priv') and hasattr(self, '__pub'):
             print('удален')
             del self.__priv, self.__pub
+
         self.balances = main.client.get_account()['balances'] # Получаем информацию о балансе
         self.quote_balances = dict()
-        [self.quote_balances.update({_['asset']: {'free': _['free'], 'overall': '0', 'equivalent': '1', 'max_trade_pairs': self.max_trade_pairs}}) for _ in self.balances if _['asset'] in self.quote_asset_list or _['asset'] == 'BNB']
+
+        [self.quote_balances.update(
+            {_['asset']: {'free': _['free'], 'overall': '0', 'equivalent': '1', 'max_trade_pairs': self.max_trade_pairs}}) 
+            for _ in self.balances if _['asset'] in self.quote_asset_list or _['asset'] == 'BNB']
+
         self.all_orders = main.client.get_open_orders() # Получаем все ордеры
         self.free_coins = dict() #Готовим список свободных монет кроме квотируемой и BNB
-        [self.free_coins.update({_['asset']: {'free': _['free']}}) for _ in self.balances if _['asset'] not in self.quote_asset_list and _['asset'] != 'BNB' and float(_['free'])>0] #Готовим список свободных монет кроме квотируемой и BNB
+
+        [self.free_coins.update({_['asset']: {'free': _['free']}}) for _ in self.balances if _['asset'] not in 
+            self.quote_asset_list and _['asset'] != 'BNB' and float(_['free'])>0] #Готовим список свободных монет кроме квотируемой и BNB
+            
         db.check_items() # Проверяем активные торговые пары в БД на наличие в белом списке
         bot.new_symbols() # Добавляем в таблицу symbols недостающие пары из белого списка
         bot.check_symbols() # Проверяем существующие пары в symbols на актуальность информации

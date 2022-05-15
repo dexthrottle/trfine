@@ -25,4 +25,14 @@ func NewByBitWS(log logging.Logger, bybitWS *ws.ByBitWS, services *service.Servi
 	}
 }
 
-func (b *bybitws) GetPositions() error
+func (b *bybitws) StartWebSocket() error {
+	err := b.bybitWS.Start()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (b *bybitws) GetPositions() error {
+	return nil
+}
