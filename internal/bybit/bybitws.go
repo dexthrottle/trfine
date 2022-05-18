@@ -2,8 +2,8 @@ package bybit
 
 import (
 	"github.com/dexthrottle/trfine/internal/service"
+	"github.com/dexthrottle/trfine/pkg/bybitapi/ws"
 	"github.com/dexthrottle/trfine/pkg/logging"
-	"github.com/frankrap/bybit-api/ws"
 )
 
 type ByBitAPIWS interface {
