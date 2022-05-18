@@ -13,9 +13,10 @@ import (
 	"github.com/dexthrottle/trfine/internal/repository"
 	"github.com/dexthrottle/trfine/internal/service"
 	"github.com/dexthrottle/trfine/internal/telegram"
+	"github.com/dexthrottle/trfine/pkg/bybitapi/rest"
+	"github.com/dexthrottle/trfine/pkg/bybitapi/ws"
 	"github.com/dexthrottle/trfine/pkg/logging"
-	"github.com/frankrap/bybit-api/rest"
-	"github.com/frankrap/bybit-api/ws"
+
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 

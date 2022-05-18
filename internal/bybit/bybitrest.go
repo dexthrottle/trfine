@@ -2,8 +2,8 @@ package bybit
 
 import (
 	"github.com/dexthrottle/trfine/internal/service"
+	"github.com/dexthrottle/trfine/pkg/bybitapi/rest"
 	"github.com/dexthrottle/trfine/pkg/logging"
-	"github.com/frankrap/bybit-api/rest"
 )
 
 type ByBitAPIRest interface {
