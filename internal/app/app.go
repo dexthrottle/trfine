@@ -78,8 +78,7 @@ func Run(dbName, baseURL string, tgBotDebug bool) {
 	if err != nil {
 		log.Fatalln(err)
 	}
-
-	resSpot, _, err := bbAPIRest.GetWalletBalanceSpot()
+	resSpot, _, err := bbAPIRest.GetUserApiKey()
 	if err != nil {
 		log.Fatalln(err)
 	}
