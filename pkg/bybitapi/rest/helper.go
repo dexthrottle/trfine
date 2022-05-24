@@ -6,13 +6,14 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"github.com/json-iterator/go"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"sort"
 	"strings"
 	"time"
+
+	jsoniter "github.com/json-iterator/go"
 )
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary

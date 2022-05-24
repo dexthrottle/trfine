@@ -20,7 +20,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-func Run(dbName, baseURL string) {
+func Run(dbName, baseURL string, tgBotDebug bool) {
 	ctx := context.Background()
 	reader := bufio.NewReader(os.Stdin)
 
@@ -62,12 +62,14 @@ func Run(dbName, baseURL string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	botApi.Debug = true
+	botApi.Debug = tgBotDebug
 
-	bot := telegram.NewBot(botApi, log)
-	if err := bot.Start(); err != nil {
-		log.Fatalln(err)
-	}
+	go func() {
+		bot := telegram.NewBot(botApi, log)
+		if err := bot.Start(); err != nil {
+			log.Fatalln(err)
+		}
+	}()
 	log.Infoln("Telegram Bot init successfully!")
 	// ------------------------------------------------------
 
@@ -76,12 +78,12 @@ func Run(dbName, baseURL string) {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	log.Printf("%+v", bbAPIRest)
-	// b, _, err := bbAPIRest.GetWalletBalance()
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
-	// log.Printf("%+v\n", b)
+	resSpot, _, err := bbAPIRest.GetUserApiKey()
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Printf("%+v\n", resSpot)
+
 	// ----------------------------------------------------------------------------
 
 	// Инициализация WebSocker ByBit -------------------------------------

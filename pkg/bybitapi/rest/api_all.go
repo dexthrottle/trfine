@@ -194,3 +194,18 @@ func (b *ByBit) GetAccountRatio(symbol string, period string, limit int) (query 
 	result = ret.Result
 	return
 }
+
+// GetUserApiKey => GET /v2/private/account/api-key
+func (b *ByBit) GetUserApiKey() (*string, []byte, *UserApiKey, error) {
+	var ret *UserApiKey
+
+	params := map[string]interface{}{}
+
+	query, resp, err := b.SignedRequest(
+		http.MethodGet, "/v2/private/account/api-key", params, &ret,
+	)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	return &query, resp, ret, nil
+}

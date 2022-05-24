@@ -498,3 +498,28 @@ type IndexOHLCResult struct {
 	BaseResult
 	Result []IndexOHLC `json:"result"`
 }
+
+type UserApiKey struct {
+	RetCode int    `json:"ret_code"`
+	RetMsg  string `json:"ret_msg"`
+	ExtCode string `json:"ext_code"`
+	Result  []struct {
+		APIKey        string    `json:"api_key"`
+		Type          string    `json:"type"`
+		UserID        int       `json:"user_id"`
+		InviterID     int       `json:"inviter_id"`
+		Ips           []string  `json:"ips"`
+		Note          string    `json:"note"`
+		Permissions   []string  `json:"permissions"`
+		CreatedAt     time.Time `json:"created_at"`
+		ExpiredAt     time.Time `json:"expired_at"`
+		ReadOnly      bool      `json:"read_only"`
+		VipLevel      string    `json:"vip_level"`
+		MktMakerLevel string    `json:"mkt_maker_level"`
+	} `json:"result"`
+	ExtInfo          interface{} `json:"ext_info"`
+	TimeNow          string      `json:"time_now"`
+	RateLimitStatus  int         `json:"rate_limit_status"`
+	RateLimitResetMs int64       `json:"rate_limit_reset_ms"`
+	RateLimit        int         `json:"rate_limit"`
+}
