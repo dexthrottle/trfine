@@ -2,8 +2,8 @@ package bybit
 
 import (
 	"github.com/dexthrottle/trfine/internal/service"
+	"github.com/dexthrottle/trfine/pkg/bybitapi/ws"
 	"github.com/dexthrottle/trfine/pkg/logging"
-	"github.com/frankrap/bybit-api/ws"
 )
 
 type ByBitAPIWS interface {
@@ -25,4 +25,14 @@ func NewByBitWS(log logging.Logger, bybitWS *ws.ByBitWS, services *service.Servi
 	}
 }
 
-func (b *bybitws) GetPositions() error
+func (b *bybitws) StartWebSocket() error {
+	err := b.bybitWS.Start()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (b *bybitws) GetPositions() error {
+	return nil
+}

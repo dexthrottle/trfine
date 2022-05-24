@@ -10,15 +10,17 @@ import (
 
 	"github.com/dexthrottle/trfine/internal/bybit"
 	"github.com/dexthrottle/trfine/internal/dto"
-	"github.com/dexthrottle/trfine/internal/license"
 	"github.com/dexthrottle/trfine/internal/repository"
 	"github.com/dexthrottle/trfine/internal/service"
+	"github.com/dexthrottle/trfine/internal/telegram"
+	"github.com/dexthrottle/trfine/pkg/bybitapi/rest"
+	"github.com/dexthrottle/trfine/pkg/bybitapi/ws"
 	"github.com/dexthrottle/trfine/pkg/logging"
-	"github.com/frankrap/bybit-api/rest"
-	"github.com/frankrap/bybit-api/ws"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-func Run(dbName, baseURL string) {
+func Run(dbName, baseURL string, tgBotDebug bool) {
 	ctx := context.Background()
 	reader := bufio.NewReader(os.Stdin)
 
@@ -55,18 +57,43 @@ func Run(dbName, baseURL string) {
 	initDefaultData(ctx, *services)
 	log.Infoln("Start successfully!")
 
+	// Инициализация Телеграм Бота --------------------------
+	botApi, err := tgbotapi.NewBotAPI(appCfg.TgApiToken)
+	if err != nil {
+		log.Fatal(err)
+	}
+	botApi.Debug = tgBotDebug
+
+	go func() {
+		bot := telegram.NewBot(botApi, log)
+		if err := bot.Start(); err != nil {
+			log.Fatalln(err)
+		}
+	}()
+	log.Infoln("Telegram Bot init successfully!")
+	// ------------------------------------------------------
+
 	// Инициализация REST ByBit ---------------------------------------------------
-	bbAPIRest := initByBitRest(appCfg.ByBitApiKey, appCfg.ByBitApiSecret, baseURL, log, services)
-	log.Printf("%+v", bbAPIRest)
+	bbAPIRest, err := initByBitRest(appCfg.ByBitApiKey, appCfg.ByBitApiSecret, baseURL, log, services)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	resSpot, _, err := bbAPIRest.GetUserApiKey()
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Printf("%+v\n", resSpot)
+
 	// ----------------------------------------------------------------------------
 
 	// Инициализация WebSocker ByBit -------------------------------------
-	bbAPIWS := initByBitWS(appCfg.ByBitApiKey, appCfg.ByBitApiSecret, log, services)
-	log.Printf("%+v", bbAPIWS)
+	// bbAPIWS := initByBitWS(appCfg.ByBitApiKey, appCfg.ByBitApiSecret, log, services)
+	// log.Printf("%+v", bbAPIWS)
+
 	// -------------------------------------------------------------------
 
 	// Проверка лицензии Бота
-	license.NewLicenseProgram(log).CheckLicense()
+	// license.NewLicenseProgram(log).CheckLicense()
 
 	// Graceful Shutdown ---------------------------
 	quit := make(chan os.Signal, 1)
@@ -75,10 +102,14 @@ func Run(dbName, baseURL string) {
 	log.Info("Exit..")
 }
 
-func initByBitRest(byBitApiKey, byBitSecretkey, baseUrlByBit string, log logging.Logger, services *service.Service) bybit.ByBitAPIRest {
+func initByBitRest(byBitApiKey, byBitSecretkey, baseUrlByBit string, log logging.Logger, services *service.Service) (bybit.ByBitAPIRest, error) {
 	bybitRest := rest.New(nil, baseUrlByBit, byBitApiKey, byBitSecretkey, true)
+	err := bybitRest.SetCorrectServerTime()
+	if err != nil {
+		return nil, err
+	}
 	bbAPIRest := bybit.NewByBit(log, bybitRest, services)
-	return bbAPIRest
+	return bbAPIRest, nil
 }
 
 func initByBitWS(byBitApiKey, byBitSecretkey string, log logging.Logger, services *service.Service) bybit.ByBitAPIWS {
