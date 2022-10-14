@@ -1,0 +1,83 @@
+version: "3"
+
+services:
+
+  backend-trfine:
+    env_file:
+      - ./.envs/.local/.app
+    ports:
+     - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - trfine_network
+    container_name: backend-trfine
+    build:
+      context: .
+      dockerfile: ./compose/go/Dockerfile
+    volumes:
+      - ./app/:/app:z
+
+    command: ["go", "run", "/app/cmd/main/main.go"]
+
+  redis-trfine:
+    container_name: redis-trfine
+    image: redis:7
+    env_file:
+      - ./.envs/.local/.app
+    ports:
+      - "6379:6379"
+    networks:
+      - trfine_network
+
+  redis-commander-trfine:
+    container_name: redis-commander-trfine
+    hostname: redis-commander
+    image: rediscommander/redis-commander:latest
+    restart: always
+    env_file:
+      - ./.envs/.local/.app
+    ports:
+      - "8081:8081"
+    networks:
+      - trfine_network
+
+  postgres-trfine:
+    build:
+      context: .
+      dockerfile: ./compose/postgres/Dockerfile
+    image: trfine_system_pg
+    container_name: postgres-trfine
+    command: postgres -c 'max_connections=1000'
+    ports:
+      - "5432:5432"
+    volumes:
+      - production_postgres_data:/var/lib/postgresql/data:Z
+      - production_postgres_data_backups:/backups:z
+    env_file:
+      - ./.envs/.local/.app
+    networks:
+      - trfine_network
+
+  pgadmin-trfine:
+    container_name: pgadmin-trfine
+    image: dpage/pgadmin4
+    ports:
+      - "5050:5050"
+    depends_on:
+      - backend
+    env_file:
+      - ./.envs/.local/.app
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    networks:
+      - trfine_network
+
+volumes:
+  production_postgres_data: {}
+  production_postgres_data_backups: {}
+  pgadmin-data: {}
+
+networks:
+  trfine_network:

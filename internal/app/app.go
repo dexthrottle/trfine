@@ -1,143 +1,185 @@
 package app
 
 import (
-	"bufio"
 	"context"
+	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
-	"github.com/dexthrottle/trfine/internal/bybit"
-	"github.com/dexthrottle/trfine/internal/dto"
-	"github.com/dexthrottle/trfine/internal/repository"
-	"github.com/dexthrottle/trfine/internal/service"
-	"github.com/dexthrottle/trfine/internal/telegram"
-	"github.com/dexthrottle/trfine/pkg/bybitapi/rest"
-	"github.com/dexthrottle/trfine/pkg/bybitapi/ws"
-	"github.com/dexthrottle/trfine/pkg/logging"
+	// "github.com/gin-contrib/sessions"
+	"github.com/gin-gonic/gin"
+	"github.com/rs/cors"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"trfine/internal/config"
+	database "trfine/internal/db/postgres"
+	"trfine/internal/db/redis"
+	apiV1 "trfine/internal/handler/v1/http"
+	servicePg "trfine/internal/service/postgres"
+	pgStorage "trfine/internal/storage/postgres"
+	"trfine/pkg/logging"
+	"trfine/pkg/server"
 )
 
-func Run(dbName, baseURL string, tgBotDebug bool) {
-	ctx := context.Background()
-	reader := bufio.NewReader(os.Stdin)
-
-	var appCfgDto dto.AppConfigDTO
-	if _, err := os.Stat(fmt.Sprintf("%s.db", dbName)); os.IsNotExist(err) {
-		appCfgDto = firstRunApp(reader)
-	}
-
-	// logger init
-	logging.Init()
+func RunApplication(saveToFile bool) {
+	// Init Logger
+	logging.Init(saveToFile)
 	log := logging.GetLogger()
+	log.Infoln("Connect logger successfully!")
 
-	// database init
-	db, err := repository.NewDB(&log, dbName)
+	// Init Config
+	cfg := config.GetConfig()
+	log.Infoln("Connect config successfully!")
+
+	// Init Context
+	const timeout = 5 * time.Second
+	ctx, shutdown := context.WithTimeout(context.Background(), timeout)
+	defer shutdown()
+
+	// connect to redis
+	redisClient := redis.NewRedisClient(
+		ctx,
+		&redis.CredentialRedis{
+			Host:   cfg.Redis.Host,
+			Port:   cfg.Redis.Port,
+			Secret: cfg.Redis.Secret,
+			Size:   cfg.Redis.Size,
+		},
+		log,
+	)
+	rc, err := redisClient.ConnectToRedis()
 	if err != nil {
-		panic("database connect error" + err.Error())
+		log.Panicln("error connecting to redis %w", err)
 	}
-	log.Info("Connect to database successfully!")
 
-	// repositories init
-	repos := repository.NewRepository(ctx, db, log)
-	log.Info("Connect repository successfully!")
-
-	// services init
-	services := service.NewService(ctx, *repos, log)
-	log.Info("Connect services successfully!")
-
-	appCfg, err := services.AppConfig.InsertAppConfig(ctx, appCfgDto)
+	// Init Database
+	db, err := database.NewPostgresDB(cfg, &log)
 	if err != nil {
-		panic("Не удалось сохранить конфигурацию!")
+		log.Panicln(err)
 	}
+	log.Infoln("Connect database successfully!")
 
-	// Add first data
-	initDefaultData(ctx, *services)
-	log.Infoln("Start successfully!")
+	// Connect storages
+	storagePg := pgStorage.NewStorage(ctx, db, log)
+	log.Infoln("Connect storage postgres successfully!")
 
-	// Инициализация Телеграм Бота --------------------------
-	botApi, err := tgbotapi.NewBotAPI(appCfg.TgApiToken)
-	if err != nil {
-		log.Fatal(err)
-	}
-	botApi.Debug = tgBotDebug
+	// Connect services
+	servicesPG := servicePg.NewService(ctx, *storagePg, log)
+	log.Infoln("Connect service postgres successfully!")
 
+	// Connect handlers
+	handlers := apiV1.NewHandler(log, *cfg, servicesPG)
+	log.Infoln("Connect services handlers!")
+
+	// New Gin router
+	router := gin.New()
+	// Init Gin Mode
+	gin.SetMode(cfg.AppConfig.GinMode)
+	// router.Use(sessions.Sessions(cfg.AppConfig.Auth.SessionName, redisStore))
+	// log.Infoln("Connect redis to GIN successfully")
+
+	// Gin Logs
+	enableGinLogs(saveToFile, router)
+
+	// Init Routes and CORS
+	handler := initRoutesAndCORS(router, handlers)
+
+	// Start HTTP Server
+	srv := server.NewServer(cfg.Listen.Port, handler)
 	go func() {
-		bot := telegram.NewBot(botApi, log)
-		if err := bot.Start(); err != nil {
-			log.Fatalln(err)
+		if err := srv.Run(); !errors.Is(err, http.ErrServerClosed) {
+			log.Panicln("error occurred while running http server: " + err.Error())
 		}
 	}()
-	log.Infoln("Telegram Bot init successfully!")
-	// ------------------------------------------------------
+	log.Infoln("Server started on http://" + cfg.Listen.BindIP + ":" + cfg.Listen.Port)
 
-	// Инициализация REST ByBit ---------------------------------------------------
-	bbAPIRest, err := initByBitRest(appCfg.ByBitApiKey, appCfg.ByBitApiSecret, baseURL, log, services)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	resSpot, _, err := bbAPIRest.GetUserApiKey()
-	if err != nil {
-		log.Fatalln(err)
-	}
-	log.Printf("%+v\n", resSpot)
-
-	// ----------------------------------------------------------------------------
-
-	// Инициализация WebSocker ByBit -------------------------------------
-	// bbAPIWS := initByBitWS(appCfg.ByBitApiKey, appCfg.ByBitApiSecret, log, services)
-	// log.Printf("%+v", bbAPIWS)
-
-	// -------------------------------------------------------------------
-
-	// Проверка лицензии Бота
-	// license.NewLicenseProgram(log).CheckLicense()
-
-	// Graceful Shutdown ---------------------------
+	// Graceful Shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
+
 	<-quit
-	log.Info("Exit..")
-}
 
-func initByBitRest(byBitApiKey, byBitSecretkey, baseUrlByBit string, log logging.Logger, services *service.Service) (bybit.ByBitAPIRest, error) {
-	bybitRest := rest.New(nil, baseUrlByBit, byBitApiKey, byBitSecretkey, true)
-	err := bybitRest.SetCorrectServerTime()
-	if err != nil {
-		return nil, err
-	}
-	bbAPIRest := bybit.NewByBit(log, bybitRest, services)
-	return bbAPIRest, nil
-}
+	log.Info("Server stopped")
 
-func initByBitWS(byBitApiKey, byBitSecretkey string, log logging.Logger, services *service.Service) bybit.ByBitAPIWS {
-	cfg := &ws.Configuration{
-		Addr:          ws.HostTestnet,
-		ApiKey:        byBitApiKey,
-		SecretKey:     byBitSecretkey,
-		AutoReconnect: true,
-		DebugMode:     true,
-	}
-	bybitWS := ws.New(cfg)
-	bbAPIWS := bybit.NewByBitWS(log, bybitWS, services)
-	return bbAPIWS
-}
-
-func initDefaultData(ctx context.Context, services service.Service) {
-	err := services.InitData.InsertDataTradeParams(ctx)
-	if err != nil {
-		panic("Не удалось сохранить дефолтные значения!")
+	if err := srv.Stop(ctx); err != nil {
+		log.Panicf("failed to stop server: %v\n", err)
 	}
 
-	err = services.InitData.InsertDataTradeInfo(ctx)
-	if err != nil {
-		panic("Не удалось сохранить дефолтные значения!")
-	}
-
-	err = services.InsertWhiteList(ctx)
-	if err != nil {
-		panic("Не удалось сохранить дефолтные значения!")
+	if err := rc.Close(); err != nil {
+		log.Panicf("error closing Redis Client: %w\n", err)
 	}
 }
+
+// initRoutesAndCORS инициализирует роутер и обработчики
+func initRoutesAndCORS(router *gin.Engine, handlers *apiV1.Handler) http.Handler {
+	c := cors.New(cors.Options{
+		AllowedMethods:     []string{http.MethodGet, http.MethodPost, http.MethodPatch, http.MethodPut, http.MethodOptions, http.MethodDelete},
+		AllowedOrigins:     []string{"http://127.0.0.1:8000", "http://127.0.0.1:8000", "http://localhost:8000"},
+		AllowCredentials:   true,
+		AllowedHeaders:     []string{"Location", "Charset", "Access-Control-Allow-Origin", "Content-Type", "content-type", "Origin", "Accept", "Content-Length", "Accept-Encoding", "X-CSRF-Token"},
+		OptionsPassthrough: true,
+		ExposedHeaders:     []string{"Location", "Authorization", "Content-Disposition"},
+		// Enable Debugging for testing, consider disabling in production
+		Debug: true,
+	})
+
+	handler := c.Handler(handlers.InitRoutes(router))
+	return handler
+}
+
+// enableGinLogs включает/отключает gin логи
+func enableGinLogs(saveToFile bool, router *gin.Engine) {
+	if saveToFile {
+		allFile, err := os.OpenFile("logs/gin.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0777)
+		if err != nil {
+			panic(fmt.Sprintf("[Message]: %s", err))
+		}
+		gin.DefaultWriter = io.MultiWriter(allFile)
+	}
+
+	router.Use(gin.Logger())
+}
+
+// func initByBitRest(byBitApiKey, byBitSecretkey, baseUrlByBit string, log logging.Logger, services *service.Service) (bybit.ByBitAPIRest, error) {
+// 	bybitRest := rest.New(nil, baseUrlByBit, byBitApiKey, byBitSecretkey, true)
+// 	err := bybitRest.SetCorrectServerTime()
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	bbAPIRest := bybit.NewByBit(log, bybitRest, services)
+// 	return bbAPIRest, nil
+// }
+
+// func initByBitWS(byBitApiKey, byBitSecretkey string, log logging.Logger, services *service.Service) bybit.ByBitAPIWS {
+// 	cfg := &ws.Configuration{
+// 		Addr:          ws.HostTestnet,
+// 		ApiKey:        byBitApiKey,
+// 		SecretKey:     byBitSecretkey,
+// 		AutoReconnect: true,
+// 		DebugMode:     true,
+// 	}
+// 	bybitWS := ws.New(cfg)
+// 	bbAPIWS := bybit.NewByBitWS(log, bybitWS, services)
+// 	return bbAPIWS
+// }
+
+// func initDefaultData(ctx context.Context, services service.Service) {
+// 	err := services.InitData.InsertDataTradeParams(ctx)
+// 	if err != nil {
+// 		panic("Не удалось сохранить дефолтные значения!")
+// 	}
+
+// 	err = services.InitData.InsertDataTradeInfo(ctx)
+// 	if err != nil {
+// 		panic("Не удалось сохранить дефолтные значения!")
+// 	}
+
+// 	err = services.InsertWhiteList(ctx)
+// 	if err != nil {
+// 		panic("Не удалось сохранить дефолтные значения!")
+// 	}
+// }
