@@ -11,16 +11,18 @@ import (
 	"syscall"
 	"time"
 
-	// "github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/cors"
 
+	"trfine/internal/bybit"
 	"trfine/internal/config"
 	database "trfine/internal/db/postgres"
 	"trfine/internal/db/redis"
 	apiV1 "trfine/internal/handler/v1/http"
 	servicePg "trfine/internal/service/postgres"
 	pgStorage "trfine/internal/storage/postgres"
+	"trfine/pkg/bybitapi/rest"
+	"trfine/pkg/bybitapi/ws"
 	"trfine/pkg/logging"
 	"trfine/pkg/server"
 )
@@ -77,10 +79,9 @@ func RunApplication(saveToFile bool) {
 
 	// New Gin router
 	router := gin.New()
+
 	// Init Gin Mode
 	gin.SetMode(cfg.AppConfig.GinMode)
-	// router.Use(sessions.Sessions(cfg.AppConfig.Auth.SessionName, redisStore))
-	// log.Infoln("Connect redis to GIN successfully")
 
 	// Gin Logs
 	enableGinLogs(saveToFile, router)
@@ -144,28 +145,31 @@ func enableGinLogs(saveToFile bool, router *gin.Engine) {
 	router.Use(gin.Logger())
 }
 
-// func initByBitRest(byBitApiKey, byBitSecretkey, baseUrlByBit string, log logging.Logger, services *service.Service) (bybit.ByBitAPIRest, error) {
-// 	bybitRest := rest.New(nil, baseUrlByBit, byBitApiKey, byBitSecretkey, true)
-// 	err := bybitRest.SetCorrectServerTime()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	bbAPIRest := bybit.NewByBit(log, bybitRest, services)
-// 	return bbAPIRest, nil
-// }
+// initByBitWS - инициализирует bybit rest клиента
+func initByBitRest(byBitApiKey, byBitSecretkey, baseUrlByBit string, log logging.Logger) (bybit.ByBitAPIRest, error) {
+	bybitRest := rest.New(nil, baseUrlByBit, byBitApiKey, byBitSecretkey, true)
+	err := bybitRest.SetCorrectServerTime()
+	if err != nil {
+		return nil, err
+	}
+	bbAPIRest := bybit.NewByBit(log, bybitRest)
 
-// func initByBitWS(byBitApiKey, byBitSecretkey string, log logging.Logger, services *service.Service) bybit.ByBitAPIWS {
-// 	cfg := &ws.Configuration{
-// 		Addr:          ws.HostTestnet,
-// 		ApiKey:        byBitApiKey,
-// 		SecretKey:     byBitSecretkey,
-// 		AutoReconnect: true,
-// 		DebugMode:     true,
-// 	}
-// 	bybitWS := ws.New(cfg)
-// 	bbAPIWS := bybit.NewByBitWS(log, bybitWS, services)
-// 	return bbAPIWS
-// }
+	return bbAPIRest, nil
+}
+
+// initByBitWS - инициализирует bybit web socket клиента
+func initByBitWS(byBitApiKey, byBitSecretkey string, log logging.Logger) bybit.ByBitAPIWS {
+	cfg := &ws.Configuration{
+		Addr:          ws.HostTestnet,
+		ApiKey:        byBitApiKey,
+		SecretKey:     byBitSecretkey,
+		AutoReconnect: true,
+		DebugMode:     true,
+	}
+	bybitWS := ws.New(cfg)
+	bbAPIWS := bybit.NewByBitWS(log, bybitWS)
+	return bbAPIWS
+}
 
 // func initDefaultData(ctx context.Context, services service.Service) {
 // 	err := services.InitData.InsertDataTradeParams(ctx)
