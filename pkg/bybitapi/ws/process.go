@@ -1,6 +1,6 @@
 package ws
 
-func (b *ByBitWS) processOrderBookSnapshot(symbol string, ob ...*OrderBookL2) { // ob []*OrderBookL2
+func (b *ByBitWS) processOrderBookSnapshot(symbol string, ob ...*OrderBookL2) {
 	var value *OrderBookLocal
 	var ok bool
 

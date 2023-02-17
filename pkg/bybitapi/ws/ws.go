@@ -26,10 +26,8 @@ const (
 
 // https://github.com/bybit-exchange/bybit-official-api-docs/blob/master/zh_cn/websocket.md
 
-// 测试网地址
 // wss://stream-testnet.bybit.com/realtime
 
-// 主网地址
 // wss://stream.bybit.com/realtime
 
 const (
@@ -38,17 +36,17 @@ const (
 )
 
 const (
-	WSOrderBook25L1 = "orderBookL2_25" // 新版25档orderBook: order_book_25L1.BTCUSD
-	WSKLine         = "kline"          // K线: kline.BTCUSD.1m
-	WSTrade         = "trade"          // 实时交易: trade/trade.BTCUSD
-	WSInsurance     = "insurance"      // 每日保险基金更新: insurance
-	WSInstrument    = "instrument"     // 产品最新行情: instrument
+	WSOrderBook25L1 = "orderBookL2_25"
+	WSKLine         = "kline"
+	WSTrade         = "trade"
+	WSInsurance     = "insurance"
+	WSInstrument    = "instrument"
 
-	WSPosition  = "position"  // 仓位变化: position
-	WSExecution = "execution" // 委托单成交信息: execution
-	WSOrder     = "order"     // 委托单的更新: order
+	WSPosition  = "position"
+	WSExecution = "execution"
+	WSOrder     = "order"
 
-	WSDisconnected = "disconnected" // WS断开事件
+	WSDisconnected = "disconnected"
 )
 
 var (
@@ -73,7 +71,7 @@ type ByBitWS struct {
 	Ended  bool
 
 	subscribeCmds   []Cmd
-	orderBookLocals map[string]*OrderBookLocal // key: symbol
+	orderBookLocals map[string]*OrderBookLocal
 
 	emitter *emission.Emitter
 }
@@ -224,7 +222,6 @@ func (b *ByBitWS) ping() {
 }
 
 func (b *ByBitWS) Auth() error {
-	// 单位:毫秒
 	expires := time.Now().Unix()*1000 + 10000
 	req := fmt.Sprintf("GET/realtime%d", expires)
 	sig := hmac.New(sha256.New, []byte(b.cfg.SecretKey))
@@ -235,7 +232,6 @@ func (b *ByBitWS) Auth() error {
 		Op: "auth",
 		Args: []interface{}{
 			b.cfg.ApiKey,
-			//fmt.Sprintf("%v", expires),
 			expires,
 			signature,
 		},
@@ -251,7 +247,6 @@ func (b *ByBitWS) processMessage(messageType int, data []byte) {
 		log.Printf("BybitWs %v", string(data))
 	}
 
-	// 处理心跳包
 	if ret.Get("ret_msg").String() == "pong" {
 		b.handlePong()
 	}
