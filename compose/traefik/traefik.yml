@@ -1,20 +1,27 @@
 log:
   level: INFO
+  filePath: "/traefik_logs/api.log"
+
+accessLog:
+  filePath: "/traefik_logs/access.log"
 
 entryPoints:
   web:
     # http
     address: ":80"
     http:
+      # https://docs.traefik.io/routing/entrypoints/#entrypoint
       redirections:
         entryPoint:
           to: web-secure
 
   web-secure:
+    # https
     address: ":443"
 
 certificatesResolvers:
   letsencrypt:
+    # https://docs.traefik.io/master/https/acme/#lets-encrypt
     acme:
       email: "todd.develop@gmail.com"
       storage: /etc/traefik/acme/acme.json
@@ -24,25 +31,35 @@ certificatesResolvers:
 http:
   routers:
     web-secure-router:
-      rule: "Host(`metrograddiplomtodd.ru`) || Host(`www.metrograddiplomtodd.ru`)"
+      rule: "Host(``)"
       entryPoints:
         - web-secure
       middlewares:
         - csrf
-      service: backend
+      service: backend-trfine-production
+      priority: 1
       tls:
         certResolver: letsencrypt
 
-  middlewares:
-    csrf:
-      headers:
-        hostsProxyHeaders: ["X-CSRFToken"]
+    media-router:
+      rule: "Host(``) && PathPrefix(`/media`)"
+      entryPoints:
+        - web-secure
+      service: nginx_media
+      priority: 3
+      tls:
+        certResolver: letsencrypt
 
   services:
-    backend:
+    backend-trfine-production:
       loadBalancer:
         servers:
-          - url: http://backend:8000
+          - url: http://backend-trfine-production:5000
+
+    nginx_media:
+      loadBalancer:
+        servers:
+          - url: http://nginx-media
 
 providers:
   file:

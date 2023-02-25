@@ -1,0 +1,7 @@
+# PostgreSQL
+# ------------------------------------------------------------------------------
+POSTGRES_HOST=postgres-trfine-local
+POSTGRES_PORT=5432
+POSTGRES_DB=trfine
+POSTGRES_USER=slkkhusghdfus
+POSTGRES_PASSWORD=khgfujysgfjgaydsfggsuydf

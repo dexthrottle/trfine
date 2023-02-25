@@ -334,6 +334,6 @@ mkn_service/media/
 .ipython/
 
 bin/
-.env
-.envs/*
-!.envs/.local/
+#.envs/*
+#!.envs/.local/
+#!.envs/.production/

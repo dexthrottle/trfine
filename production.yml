@@ -1,32 +1,74 @@
-
 version: "3"
 
 services:
 
-  backend:
-    env_file:
-      - ./.envs/.local/.app
-    ports:
-     - "8000:8000"
-    depends_on:
-      - postgres
-    networks:
-      - todo_network
-    container_name: backend
+  backend-trfine-production:
+    container_name: backend-trfine-production
     build:
       context: .
       dockerfile: ./compose/go/Dockerfile
     volumes:
-      - .:/go/src/app
+      - production_nginx_media:/app/puls_service/media:z
+    env_file:
+      - ./.envs/.production/.app
+    ports:
+     - "8000:8000"
+    depends_on:
+      - postgres-trfine-production
+      - redis-trfine-production
+    networks:
+      - trfine_network
+    command: ["go", "run", "/app/cmd/main/main.go"]
 
-    command: ["/app/app/bin/app"]
+  redis-trfine-production:
+    container_name: redis-trfine
+    image: redis:7
+    env_file:
+      - ./.envs/.production/.app
+    ports:
+      - "6379:6379"
+    networks:
+      - trfine_network
 
-  postgres:
+  nginx-media:
+    image: "nginx:latest"
+    depends_on:
+      - backend-trfine-production
+    volumes:
+      - production_nginx_media:/usr/share/nginx/html/media:ro
+
+  traefik:
+    build:
+      context: .
+      dockerfile: ./compose/production/traefik/Dockerfile
+    image: puls_service_production_traefik
+    depends_on:
+      - django
+    volumes:
+      - production_traefik:/etc/traefik/acme
+      - ./traefik_logs/:/traefik_logs/
+    ports:
+      - "0.0.0.0:80:80"
+      - "0.0.0.0:443:443"
+
+  redis-commander-trfine-production:
+    container_name: redis-commander-trfine-production
+    hostname: redis-commander
+    image: rediscommander/redis-commander:latest
+    restart: always
+    env_file:
+      - ./.envs/.production/.app
+    ports:
+      - "8081:8081"
+    networks:
+      - trfine_network
+
+  postgres-trfine-production:
     build:
       context: .
       dockerfile: ./compose/postgres/Dockerfile
-    image: todo_system_pg
-    container_name: postgres
+    image: trfine_system_pg
+    container_name: postgres-trfine-production
     command: postgres -c 'max_connections=1000'
     ports:
       - "5432:5432"
@@ -34,27 +76,30 @@ services:
       - production_postgres_data:/var/lib/postgresql/data:Z
       - production_postgres_data_backups:/backups:z
     env_file:
-      - ./.envs/.local/.app
+      - ./.envs/.production/.app
     networks:
-      - todo_network
+      - trfine_network
 
-  pgadmin:
+  pgadmin-trfine-production:
+    container_name: pgadmin-trfine-production
     image: dpage/pgadmin4
     ports:
       - "5050:5050"
     depends_on:
-      - backend
+      - backend-trfine-production
     env_file:
-      - ./.envs/.local/.app
+      - ./.envs/.production/.app
     volumes:
       - pgadmin-data:/var/lib/pgadmin
     networks:
-      - todo_network
+      - trfine_network
 
 volumes:
   production_postgres_data: {}
   production_postgres_data_backups: {}
   pgadmin-data: {}
+  production_traefik: {}
+  production_nginx_media: {}
 
 networks:
-  todo_network:
+  trfine_network:

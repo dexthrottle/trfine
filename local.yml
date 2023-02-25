@@ -2,26 +2,25 @@ version: "3"
 
 services:
 
-  backend-trfine:
-    env_file:
-      - ./.envs/.local/.app
-    ports:
-     - "8000:8000"
-    depends_on:
-      - postgres
-      - redis
-    networks:
-      - trfine_network
-    container_name: backend-trfine
+  backend-trfine-local:
+    container_name: backend-trfine-local
     build:
       context: .
       dockerfile: ./compose/go/Dockerfile
     volumes:
       - ./app/:/app:z
-
+    env_file:
+      - ./.envs/.local/.app
+    ports:
+     - "8000:8000"
+    depends_on:
+      - postgres-trfine-local
+      - redis-trfine-local
+    networks:
+      - trfine_network
     command: ["go", "run", "/app/cmd/main/main.go"]
 
-  redis-trfine:
+  redis-trfine-local:
     container_name: redis-trfine
     image: redis:7
     env_file:
@@ -31,8 +30,8 @@ services:
     networks:
       - trfine_network
 
-  redis-commander-trfine:
-    container_name: redis-commander-trfine
+  redis-commander-trfine-local:
+    container_name: redis-commander-trfine-local
     hostname: redis-commander
     image: rediscommander/redis-commander:latest
     restart: always
@@ -43,30 +42,30 @@ services:
     networks:
       - trfine_network
 
-  postgres-trfine:
+  postgres-trfine-local:
     build:
       context: .
       dockerfile: ./compose/postgres/Dockerfile
     image: trfine_system_pg
-    container_name: postgres-trfine
+    container_name: postgres-trfine-local
     command: postgres -c 'max_connections=1000'
     ports:
       - "5432:5432"
     volumes:
-      - production_postgres_data:/var/lib/postgresql/data:Z
-      - production_postgres_data_backups:/backups:z
+      - local_postgres_data:/var/lib/postgresql/data:Z
+      - local_postgres_data_backups:/backups:z
     env_file:
       - ./.envs/.local/.app
     networks:
       - trfine_network
 
-  pgadmin-trfine:
-    container_name: pgadmin-trfine
+  pgadmin-trfine-local:
+    container_name: pgadmin-trfine-local
     image: dpage/pgadmin4
     ports:
       - "5050:5050"
     depends_on:
-      - backend
+      - backend-trfine-local
     env_file:
       - ./.envs/.local/.app
     volumes:
@@ -75,8 +74,8 @@ services:
       - trfine_network
 
 volumes:
-  production_postgres_data: {}
-  production_postgres_data_backups: {}
+  local_postgres_data: {}
+  local_postgres_data_backups: {}
   pgadmin-data: {}
 
 networks:
