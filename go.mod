@@ -18,6 +18,7 @@ require (
 
 require (
 	github.com/BurntSushi/toml v1.1.0 // indirect
+	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/joho/godotenv v1.4.0 // indirect
 	github.com/lib/pq v1.10.3 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
@@ -34,6 +35,7 @@ require (
 	github.com/go-playground/universal-translator v0.17.0 // indirect
 	github.com/go-playground/validator/v10 v10.4.1 // indirect
 	github.com/golang/protobuf v1.3.3 // indirect
+	github.com/hirokisan/bybit/v2 v2.10.0
 	github.com/ilyakaznacheev/cleanenv v1.4.0
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.13.0 // indirect

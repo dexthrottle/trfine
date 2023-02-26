@@ -14,17 +14,16 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rs/cors"
 
-	"trfine/internal/bybit"
 	"trfine/internal/config"
 	database "trfine/internal/db/postgres"
 	"trfine/internal/db/redis"
 	apiV1 "trfine/internal/handler/v1/http"
 	servicePg "trfine/internal/service/postgres"
 	pgStorage "trfine/internal/storage/postgres"
-	"trfine/pkg/bybitapi/rest"
-	"trfine/pkg/bybitapi/ws"
 	"trfine/pkg/logging"
 	"trfine/pkg/server"
+
+	bybit2 "github.com/hirokisan/bybit/v2"
 )
 
 func RunApplication(saveToFile bool) {
@@ -146,29 +145,15 @@ func enableGinLogs(saveToFile bool, router *gin.Engine) {
 }
 
 // initByBitWS - инициализирует bybit rest клиента
-func initByBitRest(byBitApiKey, byBitSecretkey, baseUrlByBit string, log logging.Logger) (bybit.ByBitAPIRest, error) {
-	bybitRest := rest.New(nil, baseUrlByBit, byBitApiKey, byBitSecretkey, true)
-	err := bybitRest.SetCorrectServerTime()
-	if err != nil {
-		return nil, err
-	}
-	bbAPIRest := bybit.NewByBit(log, bybitRest)
-
-	return bbAPIRest, nil
+func initByBitRest(byBitApiKey, byBitSecretkey string, log logging.Logger) *bybit2.Client {
+	client := bybit2.NewClient().WithAuth(byBitApiKey, byBitSecretkey)
+	return client
 }
 
 // initByBitWS - инициализирует bybit web socket клиента
-func initByBitWS(byBitApiKey, byBitSecretkey string, log logging.Logger) bybit.ByBitAPIWS {
-	cfg := &ws.Configuration{
-		Addr:          ws.HostTestnet,
-		ApiKey:        byBitApiKey,
-		SecretKey:     byBitSecretkey,
-		AutoReconnect: true,
-		DebugMode:     true,
-	}
-	bybitWS := ws.New(cfg)
-	bbAPIWS := bybit.NewByBitWS(log, bybitWS)
-	return bbAPIWS
+func initByBitWS(byBitApiKey, byBitSecretkey string, log logging.Logger) *bybit2.WebSocketClient {
+	wsClient := bybit2.NewWebsocketClient()
+	return wsClient
 }
 
 // func initDefaultData(ctx context.Context, services service.Service) {
