@@ -7,10 +7,12 @@ require (
 	github.com/dexthrottle/trfine v0.0.0-20220524115404-c4dbdf5bd711
 	github.com/go-redis/redis/v9 v9.0.0-beta.3
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
+	github.com/google/go-querystring v1.1.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/jpillora/backoff v1.0.0
 	github.com/json-iterator/go v1.1.12
 	github.com/sirupsen/logrus v1.9.0
+	github.com/stretchr/testify v1.8.0
 	github.com/tidwall/gjson v1.14.3
 	gorm.io/driver/postgres v1.4.4
 	gorm.io/gorm v1.24.0
@@ -18,10 +20,11 @@ require (
 
 require (
 	github.com/BurntSushi/toml v1.1.0 // indirect
-	github.com/google/go-querystring v1.1.0 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/joho/godotenv v1.4.0 // indirect
 	github.com/lib/pq v1.10.3 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	olympos.io/encoding/edn v0.0.0-20201019073823-d3554ca0b0a3 // indirect
 )

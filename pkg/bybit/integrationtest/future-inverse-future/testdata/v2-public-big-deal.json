@@ -1,0 +1,20 @@
+[
+  {
+    "symbol": "BTCUSD",
+    "side": "Sell",
+    "timestamp": 1665194992,
+    "value": 1421334
+  },
+  {
+    "symbol": "BTCUSD",
+    "side": "Sell",
+    "timestamp": 1665147623,
+    "value": 996366
+  },
+  {
+    "symbol": "BTCUSD",
+    "side": "Sell",
+    "timestamp": 1665147589,
+    "value": 1483239
+  }
+]
